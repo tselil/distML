@@ -1,4 +1,5 @@
 import scala.io.Source
+import org.jblas.DoubleMatrix
 import breeze.linalg._
 import spark._
 
