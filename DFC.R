@@ -35,11 +35,11 @@ sgdBase <- function(mat) {
 
 	# Initialize
 	minval <- min(mat)
-  maxval <- max(mat)
-  row_feats <- matrix(init,rank,m)
-  col_feats <- matrix(init,rank,n)
-  rmse <- 2.0 # set rmse
-  rmse_prev <- 2.0 # set previous rmse
+	maxval <- max(mat)
+	row_feats <- matrix(init,rank,m)
+	col_feats <- matrix(init,rank,n)
+	rmse <- 2.0 # set rmse
+	rmse_prev <- 2.0 # set previous rmse
 
 	# Find nonzero entries
 	nonzero_rowscols <- which(mat != 0,arr.ind = T)
