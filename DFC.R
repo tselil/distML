@@ -85,5 +85,5 @@ sgdBase <- function(mat) {
 feats <- sgdBase(testM)
 row_feats <- feats[[1]]
 col_feats <- feats[[2]]
-dif <- testM - (t(row_feats) %*% col_feats)
+dif <- testM - (row_feats %*% col_feats)
 cat("dif: ",dif)
