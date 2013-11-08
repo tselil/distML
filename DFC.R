@@ -1,16 +1,17 @@
-#require(SparkR)
-#
-#args <- commandArgs(trailing = TRUE)
-#
-#if (length(args) < 1) {
-#	print("Usage: pi <master> [<slices>]")
-#	q("no")
-#}
-#
-#sc <- sparkR.init(args[[1]], "DFCR")
+require(SparkR)
 
-#slices <- ifelse(length(args) > 1, as.integer(args[[2]]),2)
+args <- commandArgs(trailing = TRUE)
 
+if (length(args) < 1) {
+	print("Usage: DFC.R <master> [<slices>]")
+	q("no")
+}
+
+sc <- sparkR.init(args[[1]], "DFCR")
+
+slices <- ifelse(length(args) > 1, as.integer(args[[2]]),2)
+
+# Test matrix init
 dims <- 30
 r <- 10
 testU <- matrix(rnorm(r*dims,mean = 4,sd = 1),r,dims)
@@ -31,6 +32,38 @@ cat(testU,"\n\n")
 cat(testV,"\n\n")
 cat(testM,"\n\n")
 
+# Takes a list of columns, makes a matrix and applies SGD algorithm
+factorCols <- function(colList) {
+	UV <- sgdBase(do.call(cbind,colList))
+	list(UV)
+}
+
+# Takes a list of factors of submatrices and projects them
+# onto the column space of the first submatrix
+dfcProject <- function(factorList) {
+}
+
+# Divide factor combine
+dfc <- function(mat, sc, slices) {
+	# pick a random permutation of the columns
+	cols <- dim(mat)[2]
+	#sampleCols <- sample(cols)
+	
+	# make the matrix into a list of columns
+	listMat <- lapply(1:cols, function(i) mat[,i])
+	
+	# distribute the column slices with spark
+	# might need to pass in desired num slices here?
+	subMatRDD <- parallelize(sc,listMat)
+	
+	# factor each slice
+	factorsRDD <- lapplyPartition(subMatRdd,factorCols)
+	
+	# collect the results and project them onto the first column slice
+	factorList <- collect(factorsRDD)
+}
+
+# Base stochastic gradient descent algorithm for matrix completion
 sgdBase <- function(mat) {
 	# Set Parameters
 	m <- dim(mat)[1]
