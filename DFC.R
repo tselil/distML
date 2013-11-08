@@ -1,5 +1,5 @@
 require(SparkR)
-library MASS
+library(MASS)
 
 args <- commandArgs(trailing = TRUE)
 
@@ -18,8 +18,8 @@ factorCols <- function(colList) {
 # Takes a list of factors of submatrices and projects them
 # onto the column space of the first submatrix
 dfcProject <- function(factorList) {
-	U_1 <- factorList[1][[1]]
-	V_1 <- factorList[1][[2]]
+	U_1 <- factorList[[1]][[1]]
+	V_1 <- factorList[[1]][[2]]
 	#pseudoinverses
 	U_1pinv <- ginv(U_1) 
 	V_1pinv <- ginv(V_1)
@@ -30,11 +30,11 @@ dfcProject <- function(factorList) {
 	X_A <- U_1
 	X_B <- V_1
 
-	for (pair in factorList){
+	for (pair in tail(factorList,-1)){
 		U_i <- pair[[1]]
 		V_i <- pair[[2]]
 		# We want to have U_1*Vhat_i = U_i*V_i, so we basically just solve
-		Vhat_i <- ((V_1 %*% V_1pinv)%*%(U_1pinv %*% U_i))%*%V_i.t
+		Vhat_i <- ((V_1 %*% V_1pinv)%*%(t(U_1pinv) %*% t(U_i)))%*%V_i
 		X_B <- cbind(X_B, Vhat_i)
 	}
 	list(X_A, X_B)
@@ -94,20 +94,32 @@ sgdBase <- function(mat) {
 			# Calculate RMSE
 			rmse_prev <- rmse
 			rmse <- sqrt(sq_err/num_nonzeros)
-			cat("root mean squared error: ",rmse)
-			cat("\n")
+			#cat("root mean squared error: ",rmse)
+			#cat("\n")
 			impr <- rmse_prev - rmse
 			t <- t + 1
 		}
 	}
+	cat("RMSE for submatrix: ",rmse,"\n")
 	list(row_feats,col_feats)
 }
 
-errorCal <- function(mat, prediction){
-	# Take the difference, then the frobenius norm
-	diff <- mat %-% prediction
-	error <- norm(diff, type = "F")
-	error
+errorCal <- function(mat, row_pred, col_pred){
+	# Find nonzero entries
+	nonzero_rowscols <- which(mat != 0,arr.ind = T)
+	nonzero_rows <- nonzero_rowscols[,1]
+	nonzero_cols <- nonzero_rowscols[,2]
+	nonzero_entries <- mat[nonzero_rowscols]
+	num_nonzeros <- length(nonzero_entries)
+	
+	sq_err <- 0.0	
+	for(j in 1:num_nonzeros) {
+		predval <- t(row_pred[,nonzero_rows[j] ]) %*% col_pred[, nonzero_cols[j] ]
+		err <- nonzero_entries[j] - predval
+		sq_err <- sq_err + err*err
+	}
+	rmse <- sqrt(sq_err/num_nonzeros)
+	rmse
 }
 
 # Divide factor combine
@@ -121,10 +133,10 @@ dfc <- function(mat, sc, slices, actualMat) {
 	
 	# distribute the column slices with spark
 	# might need to pass in desired num slices here?
-	subMatRDD <- parallelize(sc,listMat)
+	subMatRDD <- parallelize(sc,listMat,slices)
 	
 	# factor each slice
-	factorsRDD <- lapplyPartition(subMatRdd,factorCols)
+	factorsRDD <- lapplyPartition(subMatRDD,factorCols)
 	
 	# collect the results and project them onto the first column slice
 	factorList <- collect(factorsRDD)
@@ -133,7 +145,8 @@ dfc <- function(mat, sc, slices, actualMat) {
 	result <- dfcProject(factorList)
 
 	# get the error
-	error <- errorCal( actualMat, t(result[[1]])%*%result[[2]])
+	error <- errorCal( actualMat, result[[1]], result[[2]])
+	error
 }
 
 sc <- sparkR.init(args[[1]], "DFCR")
@@ -141,7 +154,7 @@ sc <- sparkR.init(args[[1]], "DFCR")
 slices <- ifelse(length(args) > 1, as.integer(args[[2]]),2)
 
 # Test matrix init
-dims <- 30
+dims <- 100
 r <- 10
 testU <- matrix(rnorm(r*dims,mean = 4,sd = 1),r,dims)
 testV <- matrix(rnorm(r*dims,mean = 4,sd = 1),r,dims)
@@ -157,13 +170,6 @@ for(i in zeros){
 	zeroedM[x,y] <- 0
 }
 
-cat(testU,"\n\n")
-cat(testV,"\n\n")
-cat(testM,"\n\n")
 
-feats <- dfc(zeroedM, sc, slices, t(testV)%*%testU)
-row_feats <- feats[[1]]
-col_feats <- feats[[2]]
-dif <- testM - (t(row_feats) %*% col_feats)
-cat("dif: ",dif)
-cat("\n")
+error <- dfc(zeroedM, sc, slices, t(testV)%*%testU)
+cat("RMSE for the entire matrix: ",error,"\n")
