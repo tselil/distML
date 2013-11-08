@@ -1,4 +1,5 @@
 require(SparkR)
+library MASS
 
 args <- commandArgs(trailing = TRUE)
 
@@ -7,30 +8,6 @@ if (length(args) < 1) {
 	q("no")
 }
 
-sc <- sparkR.init(args[[1]], "DFCR")
-
-slices <- ifelse(length(args) > 1, as.integer(args[[2]]),2)
-
-# Test matrix init
-dims <- 30
-r <- 10
-testU <- matrix(rnorm(r*dims,mean = 4,sd = 1),r,dims)
-testV <- matrix(rnorm(r*dims,mean = 4,sd = 1),r,dims)
-testG <- matrix(rnorm(dims*dims,mean = 0,sd = .05),dims,dims)
-testM <- t(testV) %*% testU + testG
-
-zeros <- sample.int(dims^2, size=floor(0.7*dims^2)) 
-
-zeroedM <- testM
-for(i in zeros){
-	x = i %% dims
-	y = i %/% dims
-	zeroedM[x,y] <- 0
-}
-
-cat(testU,"\n\n")
-cat(testV,"\n\n")
-cat(testM,"\n\n")
 
 # Takes a list of columns, makes a matrix and applies SGD algorithm
 factorCols <- function(colList) {
@@ -41,28 +18,28 @@ factorCols <- function(colList) {
 # Takes a list of factors of submatrices and projects them
 # onto the column space of the first submatrix
 dfcProject <- function(factorList) {
-}
+	U_1 <- factorList[1][[1]]
+	V_1 <- factorList[1][[2]]
+	#pseudoinverses
+	U_1pinv <- ginv(U_1) 
+	V_1pinv <- ginv(V_1)
+	numParts <- length(factorList)
+	partSize <- dim(U_1)[2] %/% numParts
+	r <- dim(U_1)[1]
+	# To be returned
+	X_A <- U_1
+	X_B <- V_1
 
-# Divide factor combine
-dfc <- function(mat, sc, slices) {
-	# pick a random permutation of the columns
-	cols <- dim(mat)[2]
-	#sampleCols <- sample(cols)
-	
-	# make the matrix into a list of columns
-	listMat <- lapply(1:cols, function(i) mat[,i])
-	
-	# distribute the column slices with spark
-	# might need to pass in desired num slices here?
-	subMatRDD <- parallelize(sc,listMat)
-	
-	# factor each slice
-	factorsRDD <- lapplyPartition(subMatRdd,factorCols)
-	
-	# collect the results and project them onto the first column slice
-	factorList <- collect(factorsRDD)
-}
+	for (pair in factorList){
+		U_i <- pair[[1]]
+		V_i <- pair[[2]]
+		# We want to have U_1*Vhat_i = U_i*V_i, so we basically just solve
+		Vhat_i <- ((V_1 %*% V_1pinv)%*%(U_1pinv %*% U_i))%*%V_i.t
+		X_B <- cbind(X_B, Vhat_i)
+	}
+	list(X_A, X_B)
 
+}
 # Base stochastic gradient descent algorithm for matrix completion
 sgdBase <- function(mat) {
 	# Set Parameters
@@ -126,7 +103,65 @@ sgdBase <- function(mat) {
 	list(row_feats,col_feats)
 }
 
-feats <- sgdBase(zeroedM)
+errorCal <- function(mat, prediction){
+	# Take the difference, then the frobenius norm
+	diff <- mat %-% prediction
+	error <- norm(diff, type = "F")
+	error
+}
+
+# Divide factor combine
+dfc <- function(mat, sc, slices, actualMat) {
+	# pick a random permutation of the columns
+	cols <- dim(mat)[2]
+	#sampleCols <- sample(cols)
+	
+	# make the matrix into a list of columns
+	listMat <- lapply(1:cols, function(i) mat[,i])
+	
+	# distribute the column slices with spark
+	# might need to pass in desired num slices here?
+	subMatRDD <- parallelize(sc,listMat)
+	
+	# factor each slice
+	factorsRDD <- lapplyPartition(subMatRdd,factorCols)
+	
+	# collect the results and project them onto the first column slice
+	factorList <- collect(factorsRDD)
+
+	# collect the results and project them onto the first column slice
+	result <- dfcProject(factorList)
+
+	# get the error
+	error <- errorCal( actualMat, t(result[[1]])%*%result[[2]])
+}
+
+sc <- sparkR.init(args[[1]], "DFCR")
+
+slices <- ifelse(length(args) > 1, as.integer(args[[2]]),2)
+
+# Test matrix init
+dims <- 30
+r <- 10
+testU <- matrix(rnorm(r*dims,mean = 4,sd = 1),r,dims)
+testV <- matrix(rnorm(r*dims,mean = 4,sd = 1),r,dims)
+testG <- matrix(rnorm(dims*dims,mean = 0,sd = .05),dims,dims)
+testM <- t(testV) %*% testU + testG
+
+zeros <- sample.int(dims^2, size=floor(0.7*dims^2)) 
+
+zeroedM <- testM
+for(i in zeros){
+	x = i %% dims
+	y = i %/% dims
+	zeroedM[x,y] <- 0
+}
+
+cat(testU,"\n\n")
+cat(testV,"\n\n")
+cat(testM,"\n\n")
+
+feats <- dfc(zeroedM, sc, slices, t(testV)%*%testU)
 row_feats <- feats[[1]]
 col_feats <- feats[[2]]
 dif <- testM - (t(row_feats) %*% col_feats)
