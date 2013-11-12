@@ -203,7 +203,8 @@ object Run_DFC_Spark{
   }
 
 ////////////////// MF projection ///////////////////
-  def mf_proj(acc:Array[(DenseMatrix[Double],DenseMatrix[Double])], numcols:Int) : (DenseMatrix[Double],DenseMatrix[Double]) = {
+
+def mf_proj(acc:Array[(DenseMatrix[Double],DenseMatrix[Double])], numcols:Int) : (DenseMatrix[Double],DenseMatrix[Double]) = {
     // project onto first partition ...
     val totalparts = acc.length // get the number of partitions
     val partsize = numcols/totalparts // assume okay

@@ -1,5 +1,6 @@
 require(SparkR)
 library(MASS)
+library('Matrix')
 
 args <- commandArgs(trailing = TRUE)
 
@@ -153,6 +154,7 @@ sc <- sparkR.init(args[[1]], "DFCR")
 
 slices <- ifelse(length(args) > 1, as.integer(args[[2]]),2)
 
+
 # Test matrix init
 dims <- 100
 r <- 10
@@ -169,7 +171,6 @@ for(i in zeros){
 	y = i %/% dims
 	zeroedM[x,y] <- 0
 }
-
 
 error <- dfc(zeroedM, sc, slices, t(testV)%*%testU)
 cat("RMSE for the entire matrix: ",error,"\n")
