@@ -24,7 +24,7 @@ unMasked <- sample.int(dim^2, size=floor((1-maskProp)*dim^2))
 
 is <-unlist(lapply(unMasked, function(i) ((i-1) %% dim)+1)) 
 js <-unlist(lapply(unMasked, function(j) ((j-1)%/% dim)+1))
-maskedM <- sparseMatrix(i=is, j=js, dims=c(dim,dim), index1=TRUE)
+maskedM <- sparseMatrix(i=is, j=js, dims=c(dim,dim), index1=TRUE, x=1.0)
 
 for(i in 1:length(is)){
 	x <- is[[i]]
@@ -39,3 +39,4 @@ trueNameV <- paste(args[[5]], "_trueV.out", collapse=" ")
 writeMM(maskedM, file=maskedName)
 write.matrix(trueU, file=trueNameU)
 write.matrix(trueV, file=trueNameV)
+warnings()
