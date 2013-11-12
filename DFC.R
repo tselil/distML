@@ -48,7 +48,7 @@ sgdBase <- function(mat) {
 	n <- dim(mat)[2]
 	lrate <- .004 # learning rate
 	k <- .04 # parameter used to minimize over-fitting
-	min_impr <- .0001 # min improvement
+	min_impr <- .01 # min improvement
 	init <- .1 # initial value for features
 	rank <- 10 # rank of feature vector
 	min_itrs <- 10
@@ -134,6 +134,7 @@ dfc <- function(mat, sc, slices, actualMat) {
 	
 	# distribute the column slices with spark
 	# might need to pass in desired num slices here?
+	
 	subMatRDD <- parallelize(sc,listMat,slices)
 	
 	# factor each slice
@@ -146,13 +147,14 @@ dfc <- function(mat, sc, slices, actualMat) {
 	result <- dfcProject(factorList)
 
 	# get the error
-	error <- errorCal( actualMat, result[[1]], result[[2]])
+	error <- errorCal( mat, result[[1]], result[[2]])
 	error
 }
 
 sc <- sparkR.init(args[[1]], "DFCR")
 
 slices <- ifelse(length(args) > 1, as.integer(args[[2]]),2)
+cat("\n\n",slices,"\n\n")
 
 
 # Test matrix init
@@ -174,3 +176,4 @@ for(i in zeros){
 
 error <- dfc(zeroedM, sc, slices, t(testV)%*%testU)
 cat("RMSE for the entire matrix: ",error,"\n")
+cat("Average magnitude of entries of M: ",sum(abs(zeroedM))/(.3*dims^2),"\n")
