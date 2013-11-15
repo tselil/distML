@@ -13,7 +13,6 @@ if (length(args) < 1) {
 # Takes a list of columns, makes a matrix and applies SGD algorithm
 factorCols <- function(colList,rows) {
 	require('Matrix')
-	print(colList)
 	M <- do.call(cBind,colList)
 	UV <- sgdBase(M)
 	list(UV)
@@ -51,7 +50,7 @@ sgdBase <- function(mat) {
 	n <- dim(mat)[2]
 	lrate <- .004 # learning rate
 	k <- .04 # parameter used to minimize over-fitting
-	min_impr <- .01 # min improvement
+	min_impr <- .001 # min improvement
 	init <- .1 # initial value for features
 	rank <- 10 # rank of feature vector
 	min_itrs <- 10
@@ -98,8 +97,8 @@ sgdBase <- function(mat) {
 			# Calculate RMSE
 			rmse_prev <- rmse
 			rmse <- sqrt(sq_err/num_nonzeros)
-			#cat("root mean squared error: ",rmse)
-			#cat("\n")
+			# cat("root mean squared error: ",rmse)
+			# cat("\n")
 			impr <- rmse_prev - rmse
 			t <- t + 1
 		}
@@ -157,7 +156,6 @@ dfc <- function(mat, sc, slices) {
 sc <- sparkR.init(args[[1]], "DFCR")
 
 slices <- ifelse(length(args) > 1, as.integer(args[[2]]),2)
-cat("\n\n",slices,"\n\n")
 
 
 # Test matrix init
@@ -183,9 +181,11 @@ maskedFile <- args[[3]]
 #trueVFile <- args[[5]]
 
 maskedM <- readMM(maskedFile)
+dims <- dim(maskedM)[1]
+revealedEntries <- nnzero(maskedM)
 #trueU <- read(trueUFile)
 #trueV <- read(trueVFile)
 
 error <- dfc(maskedM, sc, slices)
 cat("RMSE for the entire matrix: ",error,"\n")
-cat("Average magnitude of entries of M: ",sum(abs(maskedM))/(.3*dims^2),"\n")
+cat("Average magnitude of entries of M: ",sum(abs(maskedM))/revealedEntries,"\n")
