@@ -1,18 +1,21 @@
 require(SparkR)
-library(MASS)
-library('Matrix')
+require(MASS)
+require('Matrix')
 
 args <- commandArgs(trailing = TRUE)
 
 if (length(args) < 1) {
-	print("Usage: DFC.R <master> [<slices>]")
+	print("Usage: DFC.R <master> [<slices>] <masked_file> <U_file> <V_file>")
 	q("no")
 }
 
 
 # Takes a list of columns, makes a matrix and applies SGD algorithm
-factorCols <- function(colList) {
-	UV <- sgdBase(do.call(cbind,colList))
+factorCols <- function(colList,rows) {
+	require('Matrix')
+	print(colList)
+	M <- do.call(cBind,colList)
+	UV <- sgdBase(M)
 	list(UV)
 }
 
@@ -36,7 +39,7 @@ dfcProject <- function(factorList) {
 		V_i <- pair[[2]]
 		# We want to have U_1*Vhat_i = U_i*V_i, so we basically just solve
 		Vhat_i <- ((V_1 %*% V_1pinv)%*%(t(U_1pinv) %*% t(U_i)))%*%V_i
-		X_B <- cbind(X_B, Vhat_i)
+		X_B <- cBind(X_B, Vhat_i)
 	}
 	list(X_A, X_B)
 
@@ -124,13 +127,13 @@ errorCal <- function(mat, row_pred, col_pred){
 }
 
 # Divide factor combine
-dfc <- function(mat, sc, slices, actualMat) {
+dfc <- function(mat, sc, slices) {
 	# pick a random permutation of the columns
 	cols <- dim(mat)[2]
 	#sampleCols <- sample(cols)
 	
-	# make the matrix into a list of columns
-	listMat <- lapply(1:cols, function(i) mat[,i])
+	# make the matrix into a list of sparse columns
+	listMat <- lapply(1:cols, function(i) mat[,i,drop=FALSE])
 	
 	# distribute the column slices with spark
 	# might need to pass in desired num slices here?
@@ -174,6 +177,15 @@ for(i in zeros){
 	zeroedM[x,y] <- 0
 }
 
-error <- dfc(zeroedM, sc, slices, t(testV)%*%testU)
+# Read matrix from file
+maskedFile <- args[[3]]
+#trueUFile <- args[[4]]
+#trueVFile <- args[[5]]
+
+maskedM <- readMM(maskedFile)
+#trueU <- read(trueUFile)
+#trueV <- read(trueVFile)
+
+error <- dfc(maskedM, sc, slices)
 cat("RMSE for the entire matrix: ",error,"\n")
-cat("Average magnitude of entries of M: ",sum(abs(zeroedM))/(.3*dims^2),"\n")
+cat("Average magnitude of entries of M: ",sum(abs(maskedM))/(.3*dims^2),"\n")

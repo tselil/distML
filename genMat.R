@@ -14,8 +14,8 @@ dim <- as.integer(args[[1]])
 r <- as.integer(args[[2]])
 noise <- as.double(args[[3]])
 maskProp <- as.double(args[[4]])
-trueU <- Matrix(rnorm(r*dim,mean = 0,sd = 1.0/sqrt(r)),r,dim)
-trueV <- Matrix(rnorm(r*dim,mean = 0,sd = 1.0/sqrt(r)),r,dim)
+trueU <- Matrix(rnorm(r*dim,mean = 0,sd = 1.0/sqrt(sqrt(r))),r,dim)
+trueV <- Matrix(rnorm(r*dim,mean = 0,sd = 1.0/sqrt(sqrt(r))),r,dim)
 # noiseMat <- Matrix(rnorm(dims*dims,mean = 0,sd = noise),dims,dims)
 # noisyM <- t(trueV) %*% trueU + noiseMat
 
