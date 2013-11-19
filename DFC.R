@@ -48,9 +48,9 @@ sgdBase <- function(mat) {
 	# Set Parameters
 	m <- dim(mat)[1]
 	n <- dim(mat)[2]
-	lrate <- .004 # learning rate
+	lrate <- .1 # learning rate
 	k <- .04 # parameter used to minimize over-fitting
-	min_impr <- .001 # min improvement
+	min_impr <- .0001 # min improvement
 	init <- .1 # initial value for features
 	rank <- 10 # rank of feature vector
 	min_itrs <- 10
@@ -97,8 +97,8 @@ sgdBase <- function(mat) {
 			# Calculate RMSE
 			rmse_prev <- rmse
 			rmse <- sqrt(sq_err/num_nonzeros)
-			# cat("root mean squared error: ",rmse)
-			# cat("\n")
+			cat("root mean squared error: ",rmse)
+			cat("\n")
 			impr <- rmse_prev - rmse
 			t <- t + 1
 		}
