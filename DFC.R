@@ -13,8 +13,7 @@ if (length(args) < 1) {
 # Takes a list of columns, makes a matrix and applies SGD algorithm
 factorCols <- function(colList,rows) {
 	require('Matrix')
-	M <- do.call(cBind,colList)
-	UV <- sgdBase(M)
+	UV <- sgdBase(colList[[1]])
 	list(UV)
 }
 
@@ -48,18 +47,18 @@ sgdBase <- function(mat) {
 	# Set Parameters
 	m <- dim(mat)[1]
 	n <- dim(mat)[2]
-	lrate <- .1 # learning rate
+	lrate <- .04 # learning rate
 	k <- .04 # parameter used to minimize over-fitting
-	min_impr <- .0001 # min improvement
-	init <- .1 # initial value for features
+	min_impr <- .00001 # min improvement
+	init <- 0.2 # initial value for features
 	rank <- 10 # rank of feature vector
 	min_itrs <- 10
 
 	# Initialize
 	minval <- min(mat)
 	maxval <- max(mat)
-	row_feats <- matrix(init,rank,m)
-	col_feats <- matrix(init,rank,n)
+	row_feats <- matrix(rnorm(rank*m,mean=0,sd = 0.2/sqrt(sqrt(r))),rank,m)
+	col_feats <- matrix(rnorm(rank*m,mean = 0,sd = 0.2/sqrt(sqrt(r))),rank,n)
 	rmse <- 2.0 # set rmse
 	rmse_prev <- 2.0 # set previous rmse
 
@@ -86,7 +85,7 @@ sgdBase <- function(mat) {
 				
 				# Find Error
 				err <- nonzero_entries[j] - predval
-				sq_err <- sq_err + err*err
+				sq_err <- sq_err + err*err + k/2.0 * ((row_feats[i, nonzero_rows[j] ])^2) * ((col_feats[i, nonzero_cols[j] ])^2)
 				
 				# Update row and col features
 				new_row_feat <- (1-lrate*k)*row_feats[i, nonzero_rows[j] ] + lrate*err*col_feats[i, nonzero_cols[j] ]
@@ -131,8 +130,8 @@ dfc <- function(mat, sc, slices) {
 	cols <- dim(mat)[2]
 	#sampleCols <- sample(cols)
 	
-	# make the matrix into a list of sparse columns
-	listMat <- lapply(1:cols, function(i) mat[,i,drop=FALSE])
+	# make the matrix into a list of column chunks
+	listMat <- lapply(1:slices, function(i) mat[,(1 + floor((i-1)*cols/slices)):floor(i*cols/slices),drop=FALSE])
 	
 	# distribute the column slices with spark
 	# might need to pass in desired num slices here?
