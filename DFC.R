@@ -122,8 +122,8 @@ sgdBase <- function(mat) {
 	# Initialize
 	minval <- min(mat)
 	maxval <- max(mat)
-	row_feats <- matrix(rnorm(rank*m,mean=0,sd = 0.2/sqrt(sqrt(r))),rank,m)
-	col_feats <- matrix(rnorm(rank*m,mean = 0,sd = 0.2/sqrt(sqrt(r))),rank,n)
+	row_feats <- matrix(rnorm(rank*m,mean=0,sd = 0.2/sqrt(sqrt(rank))),rank,m)
+	col_feats <- matrix(rnorm(rank*m,mean = 0,sd = 0.2/sqrt(sqrt(rank))),rank,n)
 	rmse <- 2.0 # set rmse
 	rmse_prev <- 2.0 # set previous rmse
 
