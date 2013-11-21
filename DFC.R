@@ -42,6 +42,68 @@ dfcProject <- function(factorList) {
 	list(X_A, X_B)
 
 }
+
+apgBase <- function(mat) {
+	# Set Parameters
+	m <- dim(mat)[1]
+	n <- dim(mat)[2]
+	p <- nnzero(mat)
+	L <- 1 # Lipschitz constant for 1/2*||Ax - b||_2^2
+	t <- 1 # speed time [BC13] parameter
+	told <- t
+	beta <- 0
+	num_sv <- 5
+	
+	U <- Matrix(0,m,1) # Factor of X
+	Uold <- U
+	V <- Matrix(0,n,1) # Factor of X
+	Vold <- V
+	mX <- sparseMatrix(m,n,0) # Sparse matrix containing predicted values
+	mXold <- mX # mX of previous iteration
+	mY <- mX # Sparse matrix "average" of Xold and X
+	
+	mu0 <- norm(mat,type="F")
+	mu <- 10^(-4)*mu0
+
+	for(iter in 1:maxiter) {
+	
+		# Get query access to G = Y - 1/L*Grad
+		Grad <- mY - mat
+		f <- function(z) as.numeric((1+beta)*(U %*% (t(V) %*% z)) - beta*(Uold %*% (t(Vold) %*% z)) - 1/L*(Grad %*% z)) # query oracle to Gk
+		tf <- function(z) as.numeric((1+beta)*(V %*% (t(U) %*% z)) - beta*(Vold %*% (t(Uold) %*% z)) - 1/L*(t(Grad) %*% z))
+		G <- extmat(f, tf, n, m)
+		
+		# Compute partial SVD
+		svd <- propack.svd(G, neig = num_sv)
+		
+		# Update Params
+		Uold <- U
+		Vold <- V
+		mXold <- mX
+		told <- t
+		
+		s <- svd$d
+		Shlf <- sqrt(s[which[s > mu/L]])
+		num_pos_sv <- length(Shlf)
+		if(num_sv == num_pos_sv) {
+			num_sv = num_pos_sv + 5
+		}
+		else {
+			num_sv = num_pos_sv + 1
+		}
+		
+		Sig <- diag(x = Shlf,num_pos_sv,num_pos_sv)
+		
+		U <- (svd$u[,1:num_pos_sv] %*% Sig)
+		V <- (svd$v[,1:num_pos_sv] %*% Sig)
+		mX <- CCODE(U,V,II,JJ) # TODO: C-Code stuff
+		t <- (1+sqrt(1+4*t^2))/2
+		beta <- (told - 1)/t
+		mY <- (1+beta)*mX - beta*mXold	
+			
+	}
+	
+
 # Base stochastic gradient descent algorithm for matrix completion
 sgdBase <- function(mat) {
 	# Set Parameters
