@@ -44,15 +44,15 @@ dfcProject <- function(factorList) {
 }
 
 apgBase <- function(mat) {
-	# Set Parameters
+	######## Set Initial Parameters #####################################
 	m <- dim(mat)[1]
 	n <- dim(mat)[2]
-	p <- nnzero(mat)
+	p <- nnzero(mat) # number of nonzero entries
 	L <- 1 # Lipschitz constant for 1/2*||Ax - b||_2^2
 	t <- 1 # speed time [BC13] parameter
 	told <- t
-	beta <- 0
-	num_sv <- 5
+	beta <- 0 # beta = (told - 1)/t
+	num_sv <- 5 # number of SV to look at
 	
 	U <- Matrix(0,m,1) # Factor of X
 	Uold <- U
@@ -64,6 +64,7 @@ apgBase <- function(mat) {
 	
 	mu0 <- norm(mat,type="F")
 	mu <- 10^(-4)*mu0
+	######################################################################
 
 	for(iter in 1:maxiter) {
 	
@@ -102,6 +103,8 @@ apgBase <- function(mat) {
 		mY <- (1+beta)*mX - beta*mXold	
 			
 	}
+	list(U,V)
+}
 	
 
 # Base stochastic gradient descent algorithm for matrix completion
