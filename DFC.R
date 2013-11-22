@@ -1,6 +1,8 @@
 require(SparkR)
 require(MASS)
 require('Matrix')
+require(Rcpp)
+require(svd)
 
 args <- commandArgs(trailing = TRUE)
 
@@ -9,11 +11,10 @@ if (length(args) < 1) {
 	q("no")
 }
 
-
 # Takes a list of columns, makes a matrix and applies SGD algorithm
 factorCols <- function(colList,rows) {
-	require('Matrix')
-	UV <- sgdBase(colList[[1]])
+	require('Matrix') # this is very important for some reason, probably should understand it
+	UV <- apgBase(colList[[1]])
 	list(UV)
 }
 
@@ -44,10 +45,20 @@ dfcProject <- function(factorList) {
 }
 
 apgBase <- function(mat) {
+	# load required packages
+	require('Matrix')
+	require(Rcpp)
+	require(svd)
+	# Load and compile the fast C++ code
+	sourceCpp('maskUV.cpp')
+	# should figure out how to do all of the above better
 	######## Set Initial Parameters #####################################
 	m <- dim(mat)[1]
 	n <- dim(mat)[2]
-	p <- nnzero(mat) # number of nonzero entries
+	IIJJ <- which(mat != 0,arr.ind = T) # list of nonzero indices
+	p <- length(IIJJ) # number of nonzero entries
+	II <- IIJJ[,1] # nonzero row indices
+	JJ <- IIJJ[,2] # nonzero col indices
 	L <- 1 # Lipschitz constant for 1/2*||Ax - b||_2^2
 	t <- 1 # speed time [BC13] parameter
 	told <- t
@@ -58,21 +69,22 @@ apgBase <- function(mat) {
 	Uold <- U
 	V <- Matrix(0,n,1) # Factor of X
 	Vold <- V
-	mX <- sparseMatrix(m,n,0) # Sparse matrix containing predicted values
+	mX <- sparseMatrix(m,n,x=0) # Sparse matrix containing predicted values
 	mXold <- mX # mX of previous iteration
 	mY <- mX # Sparse matrix "average" of Xold and X
 	
 	mu0 <- norm(mat,type="F")
 	mu <- 10^(-4)*mu0
+	maxiter <- 20 # set this based on desired error
 	######################################################################
 
 	for(iter in 1:maxiter) {
-	
+		cat("iteration: ",iter,"\n")
 		# Get query access to G = Y - 1/L*Grad
 		Grad <- mY - mat
 		f <- function(z) as.numeric((1+beta)*(U %*% (t(V) %*% z)) - beta*(Uold %*% (t(Vold) %*% z)) - 1/L*(Grad %*% z)) # query oracle to Gk
 		tf <- function(z) as.numeric((1+beta)*(V %*% (t(U) %*% z)) - beta*(Vold %*% (t(Uold) %*% z)) - 1/L*(t(Grad) %*% z))
-		G <- extmat(f, tf, n, m)
+		G <- extmat(f, tf, m, n)
 		
 		# Compute partial SVD
 		svd <- propack.svd(G, neig = num_sv)
@@ -84,7 +96,7 @@ apgBase <- function(mat) {
 		told <- t
 		
 		s <- svd$d
-		Shlf <- sqrt(s[which[s > mu/L]])
+		Shlf <- sqrt(s[which(s > mu/L)])
 		num_pos_sv <- length(Shlf)
 		if(num_sv == num_pos_sv) {
 			num_sv = num_pos_sv + 5
@@ -97,13 +109,16 @@ apgBase <- function(mat) {
 		
 		U <- (svd$u[,1:num_pos_sv] %*% Sig)
 		V <- (svd$v[,1:num_pos_sv] %*% Sig)
-		mX <- CCODE(U,V,II,JJ) # TODO: C-Code stuff
+		mX <- sparseMatrix(i=II,j=JJ,x=maskUV(as.matrix(U),as.matrix(V),II,JJ)) # Call into C++ code
 		t <- (1+sqrt(1+4*t^2))/2
 		beta <- (told - 1)/t
 		mY <- (1+beta)*mX - beta*mXold	
 			
 	}
-	list(U,V)
+	#return transposes because of how other code works
+	cat("U: ", dim(U),"\n")
+	cat("V: ", dim(V),"\n")
+	list(t(U),t(V))
 }
 	
 
@@ -133,34 +148,50 @@ sgdBase <- function(mat) {
 	nonzero_cols <- nonzero_rowscols[,2]
 	nonzero_entries <- mat[nonzero_rowscols]
 	num_nonzeros <- length(nonzero_entries)
+	
 
+	
 	for(i in 1:rank) {
 		cat("rank: ", i, "\n")
 		t <- 0
 		impr <- 0.0
 		while(t < min_itrs || impr > min_impr) {
 			sq_err <- 0.0
-			for(j in 1:num_nonzeros) {
+			pred_time <- system.time(0)
+			err_time <- system.time(0)
+			update_time <- system.time(0)
+			
+			fortime <- system.time(for(j in 1:num_nonzeros) {
 				# find predicted val
+				start_pred <- proc.time()
 				predval <- t(row_feats[,nonzero_rows[j] ]) %*% col_feats[,nonzero_cols[j] ]
+				pred_time <- pred_time + proc.time() - start_pred
 				
 				# apply cut off
 				if(predval < minval) { predval <- minval }
 				if(predval > maxval) { predval <- maxval }
 				
 				# Find Error
+				start_err <- proc.time()
 				err <- nonzero_entries[j] - predval
 				sq_err <- sq_err + err*err + k/2.0 * ((row_feats[i, nonzero_rows[j] ])^2) * ((col_feats[i, nonzero_cols[j] ])^2)
+				err_time <- err_time + proc.time() - start_err
 				
 				# Update row and col features
+				start_update <- proc.time()
 				new_row_feat <- (1-lrate*k)*row_feats[i, nonzero_rows[j] ] + lrate*err*col_feats[i, nonzero_cols[j] ]
 				new_col_feat <- (1-lrate*k)*col_feats[i, nonzero_cols[j] ] + lrate*err*row_feats[i, nonzero_rows[j] ]
 				row_feats[i, nonzero_rows[j] ] <- new_row_feat
 				col_feats[i, nonzero_cols[j] ] <- new_col_feat
-			}
+				update_time <- update_time + proc.time() - start_update
+			})
 			# Calculate RMSE
 			rmse_prev <- rmse
 			rmse <- sqrt(sq_err/num_nonzeros)
+			cat("pred_time: ",pred_time,"\n")
+			cat("err_time: ",err_time,"\n")
+			cat("update_time: ",update_time,"\n")
+			cat("fortime: ", fortime,"\n")
 			cat("root mean squared error: ",rmse)
 			cat("\n")
 			impr <- rmse_prev - rmse
@@ -250,6 +281,7 @@ revealedEntries <- nnzero(maskedM)
 #trueU <- read(trueUFile)
 #trueV <- read(trueVFile)
 
+# Run DFC
 error <- dfc(maskedM, sc, slices)
 cat("RMSE for the entire matrix: ",error,"\n")
 cat("Average magnitude of entries of M: ",sum(abs(maskedM))/revealedEntries,"\n")
