@@ -41,7 +41,6 @@ dfcProject <- function(factorList) {
 		Vhat_i <- t(((V_1pinv %*% V_1)%*%(U_1pinv %*% U_i)) %*% t(V_i))
 		X_B <- rBind(X_B, Vhat_i)
 	}
-	print(X_A %*% t(X_B))
 	list(X_A, X_B)
 }
 
@@ -88,7 +87,6 @@ dfcRandProject <- function(factorList) {
 	Qpinv <- ginv(Q)
 	Vlist <- lapply(factorList, function(UV) (Qpinv %*% UV[[1]]) %*% t(UV[[2]]))
 	V <- t(do.call(cBind,Vlist))
-	print(Q %*% t(V))
 	list(Q,V) 
 }
 
@@ -126,7 +124,7 @@ apgBase <- function(mat) {
 	mu <- 0.1*mu0
 	muTarget <- 10^(-4)*mu0
 	cat("mu :", mu, "\n")
-	maxiter <- 25 # set this based on desired error
+	maxiter <- 50 # set this based on desired error
 	######################################################################
 
 	for(iter in 1:maxiter) {
@@ -295,7 +293,7 @@ dfc <- function(mat, sc, slices) {
 	factorList <- collect(factorsRDD)
 
 	# collect the results and project them onto the first column slice
-	result <- dfcProject(factorList)
+	result <- dfcRandProject(factorList)
 
 	# get the error
 	#print(result[[1]]%*%t(result[[2]]))
