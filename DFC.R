@@ -7,14 +7,16 @@ require(svd)
 args <- commandArgs(trailing = TRUE)
 
 if (length(args) < 1) {
-	print("Usage: DFC.R <master> [<slices>] <masked_file> <U_file> <V_file>")
+	print("Usage: DFC.R <master> [<slices>] <masked_file> <iterations>")
 	q("no")
 }
 
 # Takes a list of columns, makes a matrix and applies SGD algorithm
-factorCols <- function(colList,rows) {
+factorCols <- function(itersAndMat) {
 	#require('Matrix') # this is very important for some reason, probably should understand it
-	UV <- apgBase(colList[[1]])
+	iters <- itersAndMat[[1]][[1]]
+	mat <- itersAndMat[[1]][[2]]
+	UV <- apgBase(mat,iters)
 	list(UV)
 }
 
@@ -90,7 +92,7 @@ dfcRandProject <- function(factorList) {
 	list(Q,V) 
 }
 
-apgBase <- function(mat) {
+apgBase <- function(mat,maxiter) {
 	# load required packages
 	require('Matrix')
 	require(Rcpp)
@@ -124,7 +126,6 @@ apgBase <- function(mat) {
 	mu <- 0.1*mu0
 	muTarget <- 10^(-4)*mu0
 	cat("mu :", mu, "\n")
-	maxiter <- 20 # set this based on desired error
 	######################################################################
 
 	for(iter in 1:maxiter) {
@@ -269,14 +270,14 @@ errorCal <- function(mat, U, V){
 }
 
 # Divide factor combine
-dfc <- function(mat, sc, slices) {
+dfc <- function(mat, sc, slices, iters) {
 	sourceCpp('maskUV.cpp')
 	# pick a random permutation of the columns
 	cols <- dim(mat)[2]
 	#sampleCols <- sample(cols)
 	
 	# make the matrix into a list of column chunks
-	listMat <- lapply(1:slices, function(i) mat[,(1 + floor((i-1)*cols/slices)):floor(i*cols/slices),drop=FALSE])
+	listMat <- lapply(1:slices, function(i) list(iters,mat[,(1 + floor((i-1)*cols/slices)):floor(i*cols/slices),drop=FALSE]))
 	
 	# distribute the column slices with spark
 	# might need to pass in desired num slices here?
@@ -322,7 +323,7 @@ slices <- ifelse(length(args) > 1, as.integer(args[[2]]),2)
 
 # Read matrix from file
 maskedFile <- args[[3]]
-#trueUFile <- args[[4]]
+iterations <- args[[4]]
 #trueVFile <- args[[5]]
 
 maskedM <- readMM(maskedFile)
@@ -332,6 +333,6 @@ revealedEntries <- nnzero(maskedM)
 #trueV <- read(trueVFile)
 
 # Run DFC
-error <- dfc(maskedM, sc, slices)
+error <- dfc(maskedM, sc, slices, iterations)
 cat("RMSE for the entire matrix: ",error,"\n")
 cat("Average magnitude of entries of M: ",sum(abs(maskedM))/revealedEntries,"\n")
