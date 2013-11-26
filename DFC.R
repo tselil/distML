@@ -58,8 +58,6 @@ dfcRandProject <- function(factorList) {
 	# Random Gaussian matrix, break into chunks for simpler processing
 	G <- Matrix(rnorm(n*(k+p),mean = 0,sd = 1),n,k+p)
 	Glist <- lapply(1:slices, function(i) G[(1 + floor((i-1)*n/slices)):floor(i*n/slices),,drop=FALSE])
-	print(length(Glist))
-	lapply(Glist,function(G) print(dim(G)))
 	
 	# Initial QR factorization
 	# Y = AG then factor Y = QR
@@ -73,7 +71,7 @@ dfcRandProject <- function(factorList) {
 		Yhat <- do.call(rBind,YhatList)
 		QRhat <- qr(Yhat)
 		Qhat <- qr.Q(QRhat)
-		QhatList <- lapply(1:slices, function(i) Q[(1 + floor((i-1)*n/slices)):floor(i*n/slices),,drop=FALSE])
+		QhatList <- lapply(1:slices, function(i) Qhat[(1 + floor((i-1)*n/slices)):floor(i*n/slices),,drop=FALSE])
 		
 		# Y = A*Qhat then factor Y = Q*R
 		Ylist <- mapply(function(UV,Qhat) UV[[1]] %*% (t(UV[[2]]) %*% Qhat),factorList,QhatList,SIMPLIFY =F)
