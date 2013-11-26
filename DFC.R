@@ -13,13 +13,14 @@ if (length(args) < 1) {
 
 # Takes a list of columns, makes a matrix and applies SGD algorithm
 factorCols <- function(colList,rows) {
-	require('Matrix') # this is very important for some reason, probably should understand it
+	#require('Matrix') # this is very important for some reason, probably should understand it
 	UV <- apgBase(colList[[1]])
 	list(UV)
 }
 
 # Takes a list of factors of submatrices and projects them
 # onto the column space of the first submatrix
+# The factors (U,V) should be m-by-r and n-by-r respectively
 dfcProject <- function(factorList) {
 	U_1 <- factorList[[1]][[1]]
 	V_1 <- factorList[[1]][[2]]
@@ -27,8 +28,8 @@ dfcProject <- function(factorList) {
 	U_1pinv <- ginv(U_1) 
 	V_1pinv <- ginv(V_1)
 	numParts <- length(factorList)
-	partSize <- dim(U_1)[2] %/% numParts
-	r <- dim(U_1)[1]
+	partSize <- dim(U_1)[1] %/% numParts
+	r <- dim(U_1)[2]
 	# To be returned
 	X_A <- U_1
 	X_B <- V_1
@@ -37,11 +38,58 @@ dfcProject <- function(factorList) {
 		U_i <- pair[[1]]
 		V_i <- pair[[2]]
 		# We want to have U_1*Vhat_i = U_i*V_i, so we basically just solve
-		Vhat_i <- ((V_1 %*% V_1pinv)%*%(t(U_1pinv) %*% t(U_i)))%*%V_i
-		X_B <- cBind(X_B, Vhat_i)
+		Vhat_i <- t(((V_1pinv %*% V_1)%*%(U_1pinv %*% U_i)) %*% t(V_i))
+		X_B <- rBind(X_B, Vhat_i)
 	}
+	print(X_A %*% t(X_B))
 	list(X_A, X_B)
+}
 
+dfcRandProject <- function(factorList) {
+	U_1 <- factorList[[1]][[1]]
+	slices <- length(factorList)
+	partSize <- dim(U_1)[1] %/% slices
+	n <- slices * partSize # assume OK
+	k <- dim(U_1)[2]
+	
+	# random projection default parameters
+	p <- 5
+	q <- 2
+	
+	# Random Gaussian matrix, break into chunks for simpler processing
+	G <- Matrix(rnorm(n*(k+p),mean = 0,sd = 1),n,k+p)
+	Glist <- lapply(1:slices, function(i) G[(1 + floor((i-1)*n/slices)):floor(i*n/slices),,drop=FALSE])
+	
+	# Initial QR factorization
+	# Y = AG then factor Y = QR
+	Ylist <- mapply(function(UV,G) UV[[1]] %*% (t(UV[[2]]) %*% G),factorList,Glist,SIMPLIFY = F)
+	Y <- do.call(cBind,Ylist)
+	QR <- qr(Y)
+	Q <- qr.Q(QR)
+	for (j in 1:q) {
+		# Yhat = A'*Q then factor Yhat = Qhat*Rhat
+		YhatList <- lapply(factorList, function(UV) UV[[2]] %*% (t(UV[[1]]) %*% Q))
+		Yhat <- do.call(rBind,YhatList)
+		QRhat <- qr(Yhat)
+		Qhat <- qr.Q(QRhat)
+		QhatList <- lapply(1:slices, function(i) Q[(1 + floor((i-1)*n/slices)):floor(i*n/slices),,drop=FALSE])
+		
+		# Y = A*Qhat then factor Y = Q*R
+		Ylist <- mapply(function(UV,Qhat) UV[[1]] %*% (t(UV[[2]]) %*% Qhat),factorList,QhatList,SIMPLIFY =F)
+		Y <- do.call(cBind,Ylist)
+		QR <- qr(Y)
+		Q <- qr.Q(QR)
+	}
+	
+	# Take only the first k columns of Q
+	Q <- Q[,1:k]
+	
+	# Finally project (Q*Q^+)*M
+	Qpinv <- ginv(Q)
+	Vlist <- lapply(factorList, function(UV) (Qpinv %*% UV[[1]]) %*% t(UV[[2]]))
+	V <- t(do.call(cBind,Vlist))
+	print(Q %*% t(V))
+	list(Q,V) 
 }
 
 apgBase <- function(mat) {
@@ -64,6 +112,7 @@ apgBase <- function(mat) {
 	told <- t
 	beta <- 0 # beta = (told - 1)/t
 	num_sv <- 5 # number of SV to look at
+	num_pos_sv <-5 # initial number of positive singular values
 	
 	U <- Matrix(0,m,1) # Factor of X
 	Uold <- U
@@ -74,8 +123,10 @@ apgBase <- function(mat) {
 	mY <- mX # Sparse matrix "average" of Xold and X
 	
 	mu0 <- norm(mat,type="F")
-	mu <- 10^(-4)*mu0
-	maxiter <- 20 # set this based on desired error
+	mu <- 0.1*mu0
+	muTarget <- 10^(-4)*mu0
+	cat("mu :", mu, "\n")
+	maxiter <- 25 # set this based on desired error
 	######################################################################
 
 	for(iter in 1:maxiter) {
@@ -97,13 +148,15 @@ apgBase <- function(mat) {
 		
 		s <- svd$d
 		Shlf <- sqrt(s[which(s > mu/L)])
-		num_pos_sv <- length(Shlf)
 		if(num_sv == num_pos_sv) {
-			num_sv = num_pos_sv + 5
+			num_sv <- num_pos_sv + 5
 		}
 		else {
-			num_sv = num_pos_sv + 1
+			num_sv <- num_pos_sv + 1
 		}
+		cat("num sv: ",num_sv,"\n")
+		# update number of positive singular values of X^k AFTER the above test
+		num_pos_sv <- length(Shlf)
 		
 		Sig <- diag(x = Shlf,num_pos_sv,num_pos_sv)
 		
@@ -113,12 +166,13 @@ apgBase <- function(mat) {
 		t <- (1+sqrt(1+4*t^2))/2
 		beta <- (told - 1)/t
 		mY <- (1+beta)*mX - beta*mXold	
-			
+		mu <- max(0.7*mu,muTarget)
+		cat("mu: ",mu,"\n")
 	}
-	#return transposes because of how other code works
 	cat("U: ", dim(U),"\n")
 	cat("V: ", dim(V),"\n")
-	list(t(U),t(V))
+	cat("RMSE for submatrix: ",errorCal(mat,t(U),t(V)),"\n")
+	list(U,V)
 }
 	
 
@@ -129,7 +183,7 @@ sgdBase <- function(mat) {
 	n <- dim(mat)[2]
 	lrate <- .04 # learning rate
 	k <- .04 # parameter used to minimize over-fitting
-	min_impr <- .00001 # min improvement
+	min_impr <- .001 # min improvement
 	init <- 0.2 # initial value for features
 	rank <- 10 # rank of feature vector
 	min_itrs <- 10
@@ -161,37 +215,37 @@ sgdBase <- function(mat) {
 			err_time <- system.time(0)
 			update_time <- system.time(0)
 			
-			fortime <- system.time(for(j in 1:num_nonzeros) {
+			for(j in 1:num_nonzeros) {
 				# find predicted val
-				start_pred <- proc.time()
+				#start_pred <- proc.time()
 				predval <- t(row_feats[,nonzero_rows[j] ]) %*% col_feats[,nonzero_cols[j] ]
-				pred_time <- pred_time + proc.time() - start_pred
+				#pred_time <- pred_time + proc.time() - start_pred
 				
 				# apply cut off
 				if(predval < minval) { predval <- minval }
 				if(predval > maxval) { predval <- maxval }
 				
 				# Find Error
-				start_err <- proc.time()
+				#start_err <- proc.time()
 				err <- nonzero_entries[j] - predval
 				sq_err <- sq_err + err*err + k/2.0 * ((row_feats[i, nonzero_rows[j] ])^2) * ((col_feats[i, nonzero_cols[j] ])^2)
-				err_time <- err_time + proc.time() - start_err
+				#err_time <- err_time + proc.time() - start_err
 				
 				# Update row and col features
-				start_update <- proc.time()
+				#start_update <- proc.time()
 				new_row_feat <- (1-lrate*k)*row_feats[i, nonzero_rows[j] ] + lrate*err*col_feats[i, nonzero_cols[j] ]
 				new_col_feat <- (1-lrate*k)*col_feats[i, nonzero_cols[j] ] + lrate*err*row_feats[i, nonzero_rows[j] ]
 				row_feats[i, nonzero_rows[j] ] <- new_row_feat
 				col_feats[i, nonzero_cols[j] ] <- new_col_feat
-				update_time <- update_time + proc.time() - start_update
-			})
+				#update_time <- update_time + proc.time() - start_update
+			}
 			# Calculate RMSE
 			rmse_prev <- rmse
 			rmse <- sqrt(sq_err/num_nonzeros)
-			cat("pred_time: ",pred_time,"\n")
-			cat("err_time: ",err_time,"\n")
-			cat("update_time: ",update_time,"\n")
-			cat("fortime: ", fortime,"\n")
+			#cat("pred_time: ",pred_time,"\n")
+			#cat("err_time: ",err_time,"\n")
+			#cat("update_time: ",update_time,"\n")
+			#cat("fortime: ", fortime,"\n")
 			cat("root mean squared error: ",rmse)
 			cat("\n")
 			impr <- rmse_prev - rmse
@@ -199,7 +253,7 @@ sgdBase <- function(mat) {
 		}
 	}
 	cat("RMSE for submatrix: ",rmse,"\n")
-	list(row_feats,col_feats)
+	list(t(row_feats),t(col_feats))
 }
 
 errorCal <- function(mat, row_pred, col_pred){
@@ -244,7 +298,8 @@ dfc <- function(mat, sc, slices) {
 	result <- dfcProject(factorList)
 
 	# get the error
-	error <- errorCal( mat, result[[1]], result[[2]])
+	#print(result[[1]]%*%t(result[[2]]))
+	error <- errorCal( mat, t(result[[1]]), t(result[[2]]))
 	error
 }
 
@@ -254,21 +309,21 @@ slices <- ifelse(length(args) > 1, as.integer(args[[2]]),2)
 
 
 # Test matrix init
-dims <- 100
-r <- 10
-testU <- matrix(rnorm(r*dims,mean = 4,sd = 1),r,dims)
-testV <- matrix(rnorm(r*dims,mean = 4,sd = 1),r,dims)
-testG <- matrix(rnorm(dims*dims,mean = 0,sd = .05),dims,dims)
-testM <- t(testV) %*% testU + testG
+#dims <- 100
+#r <- 10
+#testU <- matrix(rnorm(r*dims,mean = 4,sd = 1),r,dims)
+#testV <- matrix(rnorm(r*dims,mean = 4,sd = 1),r,dims)
+#testG <- matrix(rnorm(dims*dims,mean = 0,sd = .05),dims,dims)
+#testM <- t(testV) %*% testU + testG
 
-zeros <- sample.int(dims^2, size=floor(0.7*dims^2)) 
+#zeros <- sample.int(dims^2, size=floor(0.7*dims^2)) 
 
-zeroedM <- testM
-for(i in zeros){
-	x = i %% dims
-	y = i %/% dims
-	zeroedM[x,y] <- 0
-}
+#zeroedM <- testM
+#for(i in zeros){
+	#x = i %% dims
+	#y = i %/% dims
+	#zeroedM[x,y] <- 0
+#}
 
 # Read matrix from file
 maskedFile <- args[[3]]
