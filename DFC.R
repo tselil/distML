@@ -45,11 +45,11 @@ dfcProject <- function(factorList) {
 }
 
 dfcRandProject <- function(factorList) {
-	U_1 <- factorList[[1]][[1]]
+	V_1 <- factorList[[1]][[2]]
 	slices <- length(factorList)
-	partSize <- dim(U_1)[1] %/% slices
+	partSize <- dim(V_1)[1]
 	n <- slices * partSize # assume OK
-	k <- dim(U_1)[2]
+	k <- dim(V_1)[2]
 	
 	# random projection default parameters
 	p <- 5
@@ -58,6 +58,8 @@ dfcRandProject <- function(factorList) {
 	# Random Gaussian matrix, break into chunks for simpler processing
 	G <- Matrix(rnorm(n*(k+p),mean = 0,sd = 1),n,k+p)
 	Glist <- lapply(1:slices, function(i) G[(1 + floor((i-1)*n/slices)):floor(i*n/slices),,drop=FALSE])
+	print(length(Glist))
+	lapply(Glist,function(G) print(dim(G)))
 	
 	# Initial QR factorization
 	# Y = AG then factor Y = QR
@@ -124,7 +126,7 @@ apgBase <- function(mat) {
 	mu <- 0.1*mu0
 	muTarget <- 10^(-4)*mu0
 	cat("mu :", mu, "\n")
-	maxiter <- 50 # set this based on desired error
+	maxiter <- 20 # set this based on desired error
 	######################################################################
 
 	for(iter in 1:maxiter) {
@@ -169,7 +171,7 @@ apgBase <- function(mat) {
 	}
 	cat("U: ", dim(U),"\n")
 	cat("V: ", dim(V),"\n")
-	cat("RMSE for submatrix: ",errorCal(mat,t(U),t(V)),"\n")
+	cat("RMSE for submatrix: ",errorCal(mat,U,V),"\n")
 	list(U,V)
 }
 	
@@ -251,29 +253,26 @@ sgdBase <- function(mat) {
 		}
 	}
 	cat("RMSE for submatrix: ",rmse,"\n")
-	list(t(row_feats),t(col_feats))
+	list(row_feats,col_feats)
 }
 
-errorCal <- function(mat, row_pred, col_pred){
+# Calculate the root mean squared error of the matrix 
+# factorization UV' on the non-zero entries of mat
+errorCal <- function(mat, U, V){
 	# Find nonzero entries
-	nonzero_rowscols <- which(mat != 0,arr.ind = T)
-	nonzero_rows <- nonzero_rowscols[,1]
-	nonzero_cols <- nonzero_rowscols[,2]
-	nonzero_entries <- mat[nonzero_rowscols]
-	num_nonzeros <- length(nonzero_entries)
-	
-	sq_err <- 0.0	
-	for(j in 1:num_nonzeros) {
-		predval <- t(row_pred[,nonzero_rows[j] ]) %*% col_pred[, nonzero_cols[j] ]
-		err <- nonzero_entries[j] - predval
-		sq_err <- sq_err + err*err
-	}
-	rmse <- sqrt(sq_err/num_nonzeros)
+	IIJJ <- which(mat != 0,arr.ind = T)
+	numNonzero <- length(IIJJ)
+	II <- IIJJ[,1]
+	JJ <- IIJJ[,2]
+	mX <- sparseMatrix(i=II,j=JJ,x=maskUV(as.matrix(U),as.matrix(V),II,JJ)) # Call into C++ code
+	# Frobenius norm/sqrt(num_nonzero) = root mean squared error
+	rmse <- norm(mat - mX,type = 'F')/sqrt(numNonzero)
 	rmse
 }
 
 # Divide factor combine
 dfc <- function(mat, sc, slices) {
+	sourceCpp('maskUV.cpp')
 	# pick a random permutation of the columns
 	cols <- dim(mat)[2]
 	#sampleCols <- sample(cols)
@@ -297,7 +296,7 @@ dfc <- function(mat, sc, slices) {
 
 	# get the error
 	#print(result[[1]]%*%t(result[[2]]))
-	error <- errorCal( mat, t(result[[1]]), t(result[[2]]))
+	error <- errorCal( mat, result[[1]], result[[2]])
 	error
 }
 
