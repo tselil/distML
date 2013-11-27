@@ -11,10 +11,10 @@ if (length(upperArgs) < 1) {
 	q("no")
 }
 outfile <- paste(upperArgs[[7]],".out",sep="")
+master <- paste(upperArgs[[1]],"[",upperArgs[[3]],"]",sep="")
 data <- list()
 for(i in seq(as.numeric(upperArgs[[2]]),as.numeric(upperArgs[[3]]))) { # num slices
 	for(j in seq(as.numeric(upperArgs[[5]]),as.numeric(upperArgs[[6]]),by = 5)) { # num iterations
-		master <- paste(upperArgs[[1]],"[",i,"]",sep="")
 		ins <- list(master,i,upperArgs[[4]],j)
 		commandArgs <- function(trailing) ins
 		print(ins)
