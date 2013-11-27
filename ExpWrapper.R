@@ -15,8 +15,10 @@ data <- list()
 for(i in seq(as.numeric(upperArgs[[2]]),as.numeric(upperArgs[[3]]))) { # num slices
 	for(j in seq(as.numeric(upperArgs[[5]]),as.numeric(upperArgs[[6]]),by = 5)) { # num iterations
 		master <- paste(upperArgs[[1]],"[",i,"]",sep="")
-		commandArgs <- function(trailing) list(master,i,upperArgs[[4]],j)
-		outs <- list(i,j,unlist(source("DFC.R")))
+		ins <- list(master,i,upperArgs[[4]],j)
+		commandArgs <- function(trailing) ins
+		print(ins)
+		outs <- c(i,j,unlist(source("DFC.R")))
 		data <- rbind(data, outs)
 	}
 }
