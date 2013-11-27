@@ -19,6 +19,7 @@ for(i in seq(as.numeric(upperArgs[[2]]),as.numeric(upperArgs[[3]]))) { # num sli
 		commandArgs <- function(trailing) ins
 		outs <- c(i,j,unlist(source("DFC.R")))
 		data <- rbind(data, outs)
+		colnames(data) <- c("slices","iterations","RMSE","overhead","subproblem time","projection time","visible")
 		print(data)
 	}
 }
