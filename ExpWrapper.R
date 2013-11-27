@@ -7,7 +7,7 @@ require(svd)
 upperArgs <- commandArgs(trailing = TRUE)
 
 if (length(upperArgs) < 1) {
-	print("Usage: DFC.R <master> <lower_slices> <upper_slices> <masked_file> <lower_iterations> <upper_iterations> <output_file>")
+	print("Usage: ExpWrapper.R <master> <lower_slices> <upper_slices> <masked_file> <lower_iterations> <upper_iterations> <output_file>")
 	q("no")
 }
 outfile <- paste(upperArgs[[7]],".out",sep="")
