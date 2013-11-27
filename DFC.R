@@ -7,23 +7,27 @@ require(svd)
 args <- commandArgs(trailing = TRUE)
 
 if (length(args) < 1) {
-	print("Usage: DFC.R <master> [<slices>] <masked_file> <iterations>")
+	print("Usage: DFC.R <master>[<slices>] <slices> <masked_file> <iterations>")
 	q("no")
 }
 
 # Takes a list of columns, makes a matrix and applies SGD algorithm
 factorCols <- function(itersAndMat) {
 	#require('Matrix') # this is very important for some reason, probably should understand it
+	t1 <- proc.time()
 	iters <- itersAndMat[[1]][[1]]
 	mat <- itersAndMat[[1]][[2]]
 	UV <- apgBase(mat,iters)
-	list(UV)
+	subproblemTime <- as.numeric((proc.time() - t1)["elapsed"])
+	out <- list(UV, subproblemTime)
+	list(out)
 }
 
 # Takes a list of factors of submatrices and projects them
 # onto the column space of the first submatrix
 # The factors (U,V) should be m-by-r and n-by-r respectively
 dfcProject <- function(factorList) {
+	t1 <- proc.time()
 	U_1 <- factorList[[1]][[1]]
 	V_1 <- factorList[[1]][[2]]
 	#pseudoinverses
@@ -43,10 +47,12 @@ dfcProject <- function(factorList) {
 		Vhat_i <- t(((V_1pinv %*% V_1)%*%(U_1pinv %*% U_i)) %*% t(V_i))
 		X_B <- rBind(X_B, Vhat_i)
 	}
-	list(X_A, X_B)
+	projTime <- as.numeric((proc.time() - t1)["elapsed"])
+	list(X_A, X_B,projTime)
 }
 
 dfcRandProject <- function(factorList) {
+	t1 <- proc.time()
 	V_1 <- factorList[[1]][[2]]
 	slices <- length(factorList)
 	partSize <- dim(V_1)[1]
@@ -89,7 +95,8 @@ dfcRandProject <- function(factorList) {
 	Qpinv <- ginv(Q)
 	Vlist <- lapply(factorList, function(UV) (Qpinv %*% UV[[1]]) %*% t(UV[[2]]))
 	V <- t(do.call(cBind,Vlist))
-	list(Q,V) 
+	randprojTime <- as.numeric((proc.time() - t1)["elapsed"])
+	list(Q,V,randprojTime) 
 }
 
 apgBase <- function(mat,maxiter) {
@@ -282,21 +289,30 @@ dfc <- function(mat, sc, slices, iters) {
 	# distribute the column slices with spark
 	# might need to pass in desired num slices here?
 	
+	t1 <- proc.time()
 	subMatRDD <- parallelize(sc,listMat,slices)
+	overhead <- as.numeric((proc.time() - t1)["elapsed"])
 	
 	# factor each slice
 	factorsRDD <- lapplyPartition(subMatRDD,factorCols)
 	
 	# collect the results and project them onto the first column slice
 	factorList <- collect(factorsRDD)
+	matrixList <- lapply(seq(1,length(factorList)), function(i) factorList[[i]][[1]])
+	subTimeList <- lapply(seq(1,length(factorList)), function(i) factorList[[i]][[2]])
+	subTime <- max(unlist(subTimeList))
+	cat("Time for subproblems: \n")
+	print(subTimeList)
 
 	# collect the results and project them onto the first column slice
-	result <- dfcRandProject(factorList)
+	result <- dfcRandProject(matrixList)
+	projTime <- result[[3]]
+	cat("Time for collection: ",projTime,"\n")
 
 	# get the error
 	#print(result[[1]]%*%t(result[[2]]))
 	error <- errorCal( mat, result[[1]], result[[2]])
-	error
+	list(error,overhead,subTime,projTime)
 }
 
 sc <- sparkR.init(args[[1]], "DFCR")
@@ -333,6 +349,10 @@ revealedEntries <- nnzero(maskedM)
 #trueV <- read(trueVFile)
 
 # Run DFC
-error <- dfc(maskedM, sc, slices, iterations)
-cat("RMSE for the entire matrix: ",error,"\n")
-cat("Average magnitude of entries of M: ",sum(abs(maskedM))/revealedEntries,"\n")
+t1 <- proc.time()
+outs <- dfc(maskedM, sc, slices, iterations)
+totalTime <- as.numeric((proc.time() - t1)["elapsed"])
+cat("RMSE for the entire matrix: ",outs[[1]],"\n")
+cat("Total time for DFC: ",totalTime,"\n")
+#cat("Average magnitude of entries of M: ",sum(abs(maskedM))/revealedEntries,"\n")
+outs
