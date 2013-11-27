@@ -56,7 +56,7 @@ dfcRandProject <- function(factorList) {
 	V_1 <- factorList[[1]][[2]]
 	slices <- length(factorList)
 	partSize <- dim(V_1)[1]
-	n <- slices * partSize # assume OK
+	n <- sum(unlist(lapply(factorList, function(UV) dim(UV[[2]])[1])))
 	k <- dim(V_1)[2]
 	
 	# random projection default parameters
