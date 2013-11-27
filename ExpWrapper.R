@@ -12,16 +12,16 @@ if (length(upperArgs) < 1) {
 }
 outfile <- paste(upperArgs[[7]],".out",sep="")
 master <- paste(upperArgs[[1]],"[",upperArgs[[3]],"]",sep="")
-data <- list()
+data <- c()
 for(i in seq(as.numeric(upperArgs[[2]]),as.numeric(upperArgs[[3]]))) { # num slices
 	for(j in seq(as.numeric(upperArgs[[5]]),as.numeric(upperArgs[[6]]),by = 5)) { # num iterations
 		ins <- list(master,i,upperArgs[[4]],j)
 		commandArgs <- function(trailing) ins
-		print(ins)
 		outs <- c(i,j,unlist(source("DFC.R")))
 		data <- rbind(data, outs)
+		print(data)
 	}
 }
-write(data, file=outfile)
+write.matrix(data, file=outfile, sep="\t")
 		
 		
