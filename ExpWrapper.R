@@ -14,7 +14,7 @@ outfile <- paste(upperArgs[[7]],".out",sep="")
 if (master == "local"){
 	master <- paste(upperArgs[[1]],"[",upperArgs[[3]],"]",sep="")
 } else {
-	master <- paste(upperArgs[[1]]," ",upperArgs[[3]]," ",sep="")
+	master <- upperArgs[[1]]
 }
 data <- c()
 for(i in seq(as.numeric(upperArgs[[2]]),as.numeric(upperArgs[[3]]))) { # num slices
