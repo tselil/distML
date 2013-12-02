@@ -7,7 +7,7 @@ require(svd)
 args <- commandArgs(trailing = TRUE)
 
 if (length(args) < 1) {
-	print("Usage: DFC.R <master>[<slices>] <slices> <masked_file> <iterations>")
+	print("Usage: DFC.R <master>[<slices>] <slices> <masked_file> <iterations> <randProject=T/F>")
 	q("no")
 }
 
@@ -21,6 +21,34 @@ factorCols <- function(itersAndMat) {
 	subproblemTime <- as.numeric((proc.time() - t1)["elapsed"])
 	out <- list(UV, subproblemTime)
 	list(out)
+}
+
+# Fast rBind for a list of matrices by pre-allocating
+fastRowBind <- function(matrixList) {
+	rows <- sum(unlist(lapply(matrixList, function(mat) dim(mat)[1])))
+	cols <- dim(matrixList[[1]])[2]
+	mat <- matrix(0.0,nrow=rows,ncol=cols)
+	rowIdx <- 1
+	for (M in matrixList) {
+		Mrows <- dim(M)[1]
+		mat[rowIdx:(rowIdx + Mrows - 1),] <- as.matrix(M)
+		rowIdx <- rowIdx + Mrows
+	}
+	mat
+}
+
+# Fast cBind for a list of matrices by pre-allocating
+fastColBind <- function(matrixList) {
+	cols <- sum(unlist(lapply(matrixList, function(mat) dim(mat)[2])))
+	rows <- dim(matrixList[[1]])[1]
+	mat <- matrix(0.0,nrow=rows,ncol=cols)
+	colIdx <- 1
+	for (M in matrixList) {
+		Mcols <- dim(M)[2]
+		mat[,colIdx:(colIdx + Mcols - 1)] <- as.matrix(M)
+		colIdx = colIdx + Mcols
+	}
+	mat
 }
 
 # Takes a list of factors of submatrices and projects them
@@ -70,20 +98,21 @@ dfcRandProject <- function(factorList) {
 	# Initial QR factorization
 	# Y = AG then factor Y = QR
 	Ylist <- mapply(function(UV,G) UV[[1]] %*% (t(UV[[2]]) %*% G),factorList,Glist,SIMPLIFY = F)
-	Y <- do.call(cBind,Ylist)
+	Y <- fastColBind(Ylist)
 	QR <- qr(Y)
 	Q <- qr.Q(QR)
+	
 	for (j in 1:q) {
 		# Yhat = A'*Q then factor Yhat = Qhat*Rhat
 		YhatList <- lapply(factorList, function(UV) UV[[2]] %*% (t(UV[[1]]) %*% Q))
-		Yhat <- do.call(rBind,YhatList)
+		Yhat <- fastRowBind(YhatList)
 		QRhat <- qr(Yhat)
 		Qhat <- qr.Q(QRhat)
 		QhatList <- lapply(1:slices, function(i) Qhat[(1 + floor((i-1)*n/slices)):floor(i*n/slices),,drop=FALSE])
 		
 		# Y = A*Qhat then factor Y = Q*R
 		Ylist <- mapply(function(UV,Qhat) UV[[1]] %*% (t(UV[[2]]) %*% Qhat),factorList,QhatList,SIMPLIFY =F)
-		Y <- do.call(cBind,Ylist)
+		Y <- Reduce('+',Ylist)
 		QR <- qr(Y)
 		Q <- qr.Q(QR)
 	}
@@ -94,7 +123,7 @@ dfcRandProject <- function(factorList) {
 	# Finally project (Q*Q^+)*M
 	Qpinv <- ginv(Q)
 	Vlist <- lapply(factorList, function(UV) (Qpinv %*% UV[[1]]) %*% t(UV[[2]]))
-	V <- t(do.call(cBind,Vlist))
+	V <- t(fastColBind(Vlist))
 	randprojTime <- as.numeric((proc.time() - t1)["elapsed"])
 	list(Q,V,randprojTime) 
 }
@@ -277,7 +306,7 @@ errorCal <- function(mat, U, V){
 }
 
 # Divide factor combine
-dfc <- function(mat, sc, slices, iters) {
+dfc <- function(mat, sc, slices, iters, randProject=TRUE) {
 	sourceCpp('maskUV.cpp')
 	# pick a random permutation of the columns
 	cols <- dim(mat)[2]
@@ -304,8 +333,14 @@ dfc <- function(mat, sc, slices, iters) {
 	cat("Time for subproblems: \n")
 	print(subTimeList)
 
-	# collect the results and project them onto the first column slice
-	result <- dfcRandProject(matrixList)
+	# collect the results and project them onto a low rank matrix
+	if(randProject) {
+		cat("Doing random projection to combine submatrices...\n")
+		result <- dfcRandProject(matrixList)
+	} else {
+		cat("Projecting all submatrices onto first submatrix...\n")
+		result <- dfcProject(matrixList)
+	}
 	projTime <- result[[3]]
 	cat("Time for collection: ",projTime,"\n")
 
@@ -340,6 +375,12 @@ slices <- ifelse(length(args) > 1, as.integer(args[[2]]),2)
 # Read matrix from file
 maskedFile <- args[[3]]
 iterations <- args[[4]]
+randProj <- T
+if(length(args) > 4) {
+	if(args[[5]] == 'F') {
+		randProj <- F
+	}
+}
 #trueVFile <- args[[5]]
 
 maskedM <- readMM(maskedFile)
@@ -350,7 +391,7 @@ revealedEntries <- nnzero(maskedM)
 
 # Run DFC
 t1 <- proc.time()
-outs <- dfc(maskedM, sc, slices, iterations)
+outs <- dfc(maskedM, sc, slices, iterations, randProject=randProj)
 totalTime <- as.numeric((proc.time() - t1)["elapsed"])
 cat("RMSE for the entire matrix: ",outs[[1]],"\n")
 cat("Total time for DFC: ",totalTime,"\n")
