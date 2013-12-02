@@ -11,7 +11,7 @@ if (length(upperArgs) < 1) {
 	q("no")
 }
 outfile <- paste(upperArgs[[7]],".out",sep="")
-if (master == "local"){
+if (upperArgs[[1]] == "local"){
 	master <- paste(upperArgs[[1]],"[",upperArgs[[3]],"]",sep="")
 } else {
 	master <- upperArgs[[1]]
