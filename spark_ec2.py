@@ -370,7 +370,8 @@ def get_existing_cluster(conn, opts, cluster_name, die_on_error=True):
 		if group_names == [cluster_name + "-master"]:
 			master_nodes.append(inst)
 		elif group_names == [cluster_name + "-slaves"]:
-			slave_nodes.append(inst)
+			if ( len(slave_nodes) < opts.slaves):
+				slave_nodes.append(inst)
   if any((master_nodes, slave_nodes)):
 	print ("Found %d master(s), %d slaves" %
 		   (len(master_nodes), len(slave_nodes)))
