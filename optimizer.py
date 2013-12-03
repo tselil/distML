@@ -6,9 +6,9 @@ from collections import defaultdict
 price = 1
 
 # Hardcoded param flags
-TIME_FLAG = 1
-BUDGET_FLAG = 2
-ERROR_FLAG = 3
+TIME_FLAG = 0
+BUDGET_FLAG = 7
+ERROR_FLAG = 2
 
 # Factor to determine nearness of matrix sizes
 sizeFactor = 2
@@ -22,7 +22,7 @@ def isNear(m1,n1,p1,m2,n2,p2):
 # Add the non-parameter values in two data tuples together
 # Assume the two tuples have matching input params
 def sumNonParams(a,b):
-	return (a[0]+b[0],a[1],a[2]+b[2],a[3],a[4],a[5],a[6])
+	return (a[0]+b[0],a[1],a[2]+b[2],a[3],a[4],a[5],a[6],a[7])
 	
 # Average all the times and errors for tuples with the same input params
 # i.e. the same (#slices, #iterations, rows, cols, revealed entries)
@@ -30,7 +30,7 @@ def averageTuples(dataTuples):
 	# Make a dictionary of lists of data tuples with the same input params
 	paramDict = defaultdict(list)	
 	for row in dataTuples:
-		rowParams = (row[1], row[3], row[4], row[5], row[6])
+		rowParams = (row[1], row[3], row[4], row[5], row[6], row[7])
 		paramDict[rowParams].append(row)
 		
 	# Average all the tuples with the same params
@@ -38,7 +38,7 @@ def averageTuples(dataTuples):
 	for paramKey in paramDict:
 		l = len(paramDict[paramKey])
 		s = reduce(sumNonParams,paramDict[paramKey])
-		averagedTuples.append((s[0]/l,s[1],s[2]/l,s[3],s[4],s[5],s[6]))
+		averagedTuples.append((s[0]/l,s[1],s[2]/l,s[3],s[4],s[5],s[6],s[7]))
 	
 	return averagedTuples
 
@@ -48,15 +48,32 @@ def loadData(fileName, time, budget, error, m, n, p):
 	dataFile = open(fileName,'r')
 	dataReader = csv.reader(dataFile,delimiter='\t',quotechar='|')
 	
-	dataTuples = [tuple(map(float,row)) for row in dataReader if (float(row[0]) <= time and \
-	              float(row[1])*float(row[0])*price <= budget and float(row[2]) <= error) and \
-	              isNear(float(row[4]),float(row[5]),float(row[6]),m,n,p)]	
+	dataTuples = [tuple(map(float,row)+[float(row[1])*float(row[0])*price]) \
+	                  for row in dataReader\
+	                  if (float(row[0]) <= time and \
+	                        float(row[1])*float(row[0])*price <= budget and \
+	                        float(row[2]) <= error and \
+	                        isNear(float(row[4]),float(row[5]),float(row[6]),m,n,p))]	
 	dataFile.close()
 	return dataTuples
 
+# Takes a list of tuples and a param flag and returns
+# a dictionary of (tuple,probability) pairs for exploration mode
+def getExploreProbs(dataTuples, paramFlag):
+	probDict = {}
+	denom = sum([1.0/t[paramFlag] for t in dataTuples])
+	for t in dataTuples:
+		probDict[t] = (1.0/t[paramFlag])/denom
+	return probDict
+
 # Choose best params given request and optimizer data
-def chooseParams(dataTuples, paramToMinimize):
-	return
+def chooseParams(dataTuples, paramToMinimize, explore):
+	config = 0
+	if explore:
+		probDict = getExploreProbs(dataTuples,paramToMinimize)
+	else:
+		config = min(dataTuples,key=lambda t: t[paramToMinimize])
+	return config
 		
 # Update optimizer data after run
 
