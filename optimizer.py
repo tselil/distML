@@ -1,6 +1,7 @@
 import sys
 import csv
 from collections import defaultdict
+import random
 
 # Price per slice
 price = 1
@@ -66,15 +67,60 @@ def getExploreProbs(dataTuples, paramFlag):
 		probDict[t] = (1.0/t[paramFlag])/denom
 	return probDict
 
+# Sample a tuple from the distribution given by a dictionary
+def sampleTuple(probDict):
+		cutOff = random.random()
+		total = 0.0
+		for t in probDict:
+			total += probDict[t]
+			if total >= cutOff:
+				return t
+
 # Choose best params given request and optimizer data
 def chooseParams(dataTuples, paramToMinimize, explore):
 	config = 0
+	# In explore mode we sample a tuple of params with probability
+	# based on the param to minimize.
 	if explore:
 		probDict = getExploreProbs(dataTuples,paramToMinimize)
+		config = sampleTuple(probDict)	
 	else:
+		# If in exploit mode we just return the best tuple
 		config = min(dataTuples,key=lambda t: t[paramToMinimize])
 	return config
 		
 # Update optimizer data after run
-
+def updateData(fileName,tup):
+	dataFile = open(fileName,'a')
+	dataWriter = csv.writer(dataFile,delimiter='\t',quotechar='|')
+	dataWriter.writerow(list(tup[0:7]))
+	dataFile.close()
+	
 # Main - Run DFC with chosen params
+NUM_PARAMS = 5
+def main(argv):
+   inputfile = ""
+   outputfile = ""
+   try:
+      opts, args = getopt.getopt(argv,"hi:o:b:t:e:",["ifile=","ofile=","max_budget=","max_time=","max_error"])
+   except getopt.GetoptError:
+      print 'test.py -i <inputfile> -o <outputfile> -b <max_budget> -t <max_time> -e <max_error>\n'
+      print 'Exactly two of -b,-t,-e must appear.\n'
+      sys.exit(2)
+   if ("-b" in argv and "-t" in argv and "-e" in argv):
+         print 'Exactly two of -b,-t,-e must appear.\n'
+   for opt, arg in opts:
+      if opt == '-h':
+         print 'test.py -i <inputfile> -o <outputfile>'
+         sys.exit()
+      elif opt in ("-i", "--ifile"):
+         inputfile = arg
+      elif opt in ("-o", "--ofile"):
+         outputfile = arg
+   print 'Input file is "', inputfile
+   print 'Output file is "', outputfile
+	
+else:
+
+if __name__=="__main__":
+	main(sys.argv[1:])
