@@ -106,7 +106,8 @@ def updateData(fileName,tup):
 # Main - Run DFC with chosen params
 NUM_PARAMS = 5
 def main(argv):
-	 inputfile = "default"
+	 datafile = "dataTable.csv"
+	 matrixfile = "default"
 	 outputfile = ""
 	 time = "unset"
 	 error = "unset"
@@ -121,16 +122,18 @@ def main(argv):
 		  if ("-b" not in argv and "-t" not in argv and "-e" not in argv):
 				raise Exception('Not enough optimization params')
 	 except:
-		  print 'test.py -i <inputfile> -o <outputfile> -b <max_budget>\
-							  -t <max_time> -e <max_error>\n'
+		  print 'test.py -m <matrix> -d <data> -o <outputfile>\
+		                 -b <max_budget> -t <max_time> -e <max_error>\n'
 		  print 'Exactly two of -b,-t,-e must appear.\n'
 		  sys.exit(2)
 	 for opt, arg in opts:
 		  if opt == '-h':
 				print 'test.py -i <inputfile> -o <outputfile>'
 				sys.exit()
-		  elif opt in ("-i", "--ifile"):
-				inputfile = arg
+		  elif opt in ("-d"):
+				dataFile = arg
+		  elif opt in ("-m"):
+				matrixFile = arg
 		  elif opt == "-o":
 				outputfile = arg
 		  elif opt == "-b":
@@ -153,21 +156,21 @@ def main(argv):
 	 else budget == "unset":
 		  optParam = BUDGET_FLAG
 
-	 f = open(inputfile,'r')
+	 f = open(matrixFile,'r')
 	 f.next()
 	 matInfo = f.next()
 	 f.close()
 	 m = int(matInfo[0])
 	 n = int(matInfo[1])
 	 p = float(matInfo[2])/(m*n)
-	 tupList = loadData(inputfile, time, budget, error, m, n, p)
+	 tupList = loadData(dataFile, time, budget, error, m, n, p)
 	 tupList = averageTuples(tupList)
 	 config = chooseParams(tupList, optParam, explore)
 	 
 	 # Call DFC
 	 slices = config[1]
 	 iterations = config[3]
-	 call("~/spark/sparkR DFC.R "+masterURL+" "+inputfile+" "\
+	 call("~/spark/sparkR DFC.R "+masterURL+" "+matrixFile+" "\
 	                             +str(iterations)+" "+outputfile)
 	 
 if __name__=="__main__":
