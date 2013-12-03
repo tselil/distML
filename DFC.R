@@ -320,8 +320,8 @@ errorCal <- function(mat, U, V){
 }
 
 # Divide factor combine
-dfc <- function(mat, sc, slices, iters, randProject=TRUE, singleSlice = FALSE,writeby = 10) {
-	if(singleSlice == FALSE) {
+dfc <- function(mat, sc, slices, iters, randProject=TRUE, local = FALSE,writeby = 10) {
+	if(local == FALSE) {
 		sourceCpp('maskUV.cpp')
 		# pick a random permutation of the columns
 		cols <- dim(mat)[2]
@@ -359,7 +359,7 @@ dfc <- function(mat, sc, slices, iters, randProject=TRUE, singleSlice = FALSE,wr
 		projTime <- result[[3]]
 		cat("Time for collection: ",projTime,"\n")
 	} else {
-		result <- apgBase(mat,iters,singleSlice,writeby)
+		result <- apgBase(mat,iters,local,writeby)
 		overhead <- 0
 		subTime <- result[[3]]
 		projTime <- 0
@@ -374,8 +374,8 @@ dfc <- function(mat, sc, slices, iters, randProject=TRUE, singleSlice = FALSE,wr
 sc <- sparkR.init(args[[1]], "DFCR")
 
 slices <- ifelse(length(args) > 1, as.integer(args[[2]]),2)
-single <- F
-if(args[[1]] == "local[1]") {single <- T}
+local1 <- F
+if(args[[1]] == "local[1]") {local1 <- T}
 
 
 # Test matrix init
@@ -418,7 +418,7 @@ revealedEntries <- nnzero(maskedM)
 # Run DFC
 
 ttot <- proc.time()
-outs <- dfc(maskedM, sc, slices, iterations, randProject=randProj,singleSlice=single,writeby=10)
+outs <- dfc(maskedM, sc, slices, iterations, randProject=randProj,local=local1,writeby=10)
 totalTime <- as.numeric((proc.time() - ttot)["elapsed"])
 cat("RMSE for the entire matrix: ",outs[[1]],"\n")
 cat("Total time for DFC: ",totalTime,"\n")
