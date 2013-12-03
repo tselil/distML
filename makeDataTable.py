@@ -19,7 +19,7 @@ for dataFile in os.listdir("./results/"):
 			m = dataFile[10:14]
 			n = m
 			rev = 0.1
-			o.write(str(time)+"\t"+str(row[0])+"\t"+str(row[2])+"\t"+str(m)+"\t"+str(n)+"\t"+str(rev)+"\n")
+			o.write(str(time)+"\t"+str(row[0])+"\t"+str(row[2])+"\t"+str(row[1])+"\t"+str(m)+"\t"+str(n)+"\t"+str(rev)+"\n")
 	except:
 		continue
 	f.close()
