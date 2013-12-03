@@ -103,13 +103,16 @@ def main(argv):
 	 inputfile = ""
 	 outputfile = ""
 	 try:
-		  opts, args = getopt.getopt(argv,"hi:o:b:t:e:",["ifile=","ofile=","max_budget=","max_time=","max_error"])
+		  opts, args = getopt.getopt(argv,"hi:o:b:t:e:",\
+						["ifile=","ofile=","max_budget=","max_time=","max_error"])
+		  if ("-b" in argv and "-t" in argv and "-e" in argv):
+				raise Exception('numargs'):
+					 print 'At least two of -b,-t,-e must appear.\n'
 	 except getopt.GetoptError:
-		  print 'test.py -i <inputfile> -o <outputfile> -b <max_budget> -t <max_time> -e <max_error>\n'
+		  print 'test.py -i <inputfile> -o <outputfile> -b <max_budget>\
+							  -t <max_time> -e <max_error>\n'
 		  print 'Exactly two of -b,-t,-e must appear.\n'
 		  sys.exit(2)
-	 if ("-b" in argv and "-t" in argv and "-e" in argv):
-		  print 'Exactly two of -b,-t,-e must appear.\n'
 	 for opt, arg in opts:
 		  if opt == '-h':
 				print 'test.py -i <inputfile> -o <outputfile>'
