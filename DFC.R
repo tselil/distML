@@ -7,20 +7,17 @@ require(svd)
 args <- commandArgs(trailing = TRUE)
 
 if (length(args) < 1) {
-	print("Usage: DFC.R <master>[<slices>] <slices> <masked_file> <iterations> <randProject=T/F>")
+	print("Usage: DFC.R <master>[<slices>] <slices> <masked_file> <iterations> <randProject=T/F> <output_file>")
 	q("no")
 }
 
 # Takes a list of columns, makes a matrix and applies SGD algorithm
 factorCols <- function(itersAndMat) {
 	#require('Matrix') # this is very important for some reason, probably should understand it
-	t1 <- proc.time()
 	iters <- itersAndMat[[1]][[1]]
 	mat <- itersAndMat[[1]][[2]]
 	UV <- apgBase(mat,iters)
-	subproblemTime <- as.numeric((proc.time() - t1)["elapsed"])
-	out <- list(UV, subproblemTime)
-	list(out)
+	list(UV)
 }
 
 # Fast rBind for a list of matrices by pre-allocating
@@ -55,7 +52,7 @@ fastColBind <- function(matrixList) {
 # onto the column space of the first submatrix
 # The factors (U,V) should be m-by-r and n-by-r respectively
 dfcProject <- function(factorList) {
-	t1 <- proc.time()
+	tproj <- proc.time()
 	U_1 <- factorList[[1]][[1]]
 	V_1 <- factorList[[1]][[2]]
 	#pseudoinverses
@@ -75,12 +72,12 @@ dfcProject <- function(factorList) {
 		Vhat_i <- t(((V_1pinv %*% V_1)%*%(U_1pinv %*% U_i)) %*% t(V_i))
 		X_B <- rBind(X_B, Vhat_i)
 	}
-	projTime <- as.numeric((proc.time() - t1)["elapsed"])
+	projTime <- as.numeric((proc.time() - tproj)["elapsed"])
 	list(X_A, X_B,projTime)
 }
 
 dfcRandProject <- function(factorList) {
-	t1 <- proc.time()
+	trproj <- proc.time()
 	V_1 <- factorList[[1]][[2]]
 	slices <- length(factorList)
 	partSize <- dim(V_1)[1]
@@ -124,11 +121,12 @@ dfcRandProject <- function(factorList) {
 	Qpinv <- ginv(Q)
 	Vlist <- lapply(factorList, function(UV) (Qpinv %*% UV[[1]]) %*% t(UV[[2]]))
 	V <- t(fastColBind(Vlist))
-	randprojTime <- as.numeric((proc.time() - t1)["elapsed"])
+	randprojTime <- as.numeric((proc.time() - trproj)["elapsed"])
 	list(Q,V,randprojTime) 
 }
 
-apgBase <- function(mat,maxiter) {
+apgBase <- function(mat,maxiter,writeout = F, writeby = 10) {
+	tbase <- proc.time()
 	# load required packages
 	require('Matrix')
 	require(Rcpp)
@@ -164,6 +162,7 @@ apgBase <- function(mat,maxiter) {
 	cat("mu :", mu, "\n")
 	######################################################################
 
+	data <- c()
 	for(iter in 1:maxiter) {
 		cat("iteration: ",iter,"\n")
 		# Get query access to G = Y - 1/L*Grad
@@ -203,11 +202,26 @@ apgBase <- function(mat,maxiter) {
 		mY <- (1+beta)*mX - beta*mXold	
 		mu <- max(0.7*mu,muTarget)
 		cat("mu: ",mu,"\n")
+		apgtime <- as.numeric((proc.time() - tbase)["elapsed"])
+		
+		# Collect data every writeby iterations
+		if(writeout == TRUE & iter %% writeby == 0) {
+			rmse <- errorCal(mat,U,V)
+			outs <- c(1, iter, rmse, 0, apgtime, 0)
+			data <- rbind(data, outs)
+		}
 	}
 	cat("U: ", dim(U),"\n")
 	cat("V: ", dim(V),"\n")
 	cat("RMSE for submatrix: ",errorCal(mat,U,V),"\n")
-	list(U,V)
+	
+	# Write to a file
+	if(writeout == TRUE) {
+		print(data)
+		colnames(data) <- c("slices","iterations","RMSE","overhead","subproblem time","projection time")
+		write.matrix(data, file=outfile, sep="\t")
+	}
+	list(U,V,apgtime)
 }
 	
 
@@ -306,44 +320,51 @@ errorCal <- function(mat, U, V){
 }
 
 # Divide factor combine
-dfc <- function(mat, sc, slices, iters, randProject=TRUE) {
-	sourceCpp('maskUV.cpp')
-	# pick a random permutation of the columns
-	cols <- dim(mat)[2]
-	#sampleCols <- sample(cols)
+dfc <- function(mat, sc, slices, iters, randProject=TRUE, singleSlice = FALSE,writeby = 10) {
+	if(singleSlice == FALSE) {
+		sourceCpp('maskUV.cpp')
+		# pick a random permutation of the columns
+		cols <- dim(mat)[2]
+		#sampleCols <- sample(cols)
 	
-	# make the matrix into a list of column chunks
-	listMat <- lapply(1:slices, function(i) list(iters,mat[,(1 + floor((i-1)*cols/slices)):floor(i*cols/slices),drop=FALSE]))
+		# make the matrix into a list of column chunks
+		listMat <- lapply(1:slices, function(i) list(iters,mat[,(1 + floor((i-1)*cols/slices)):floor(i*cols/slices),drop=FALSE]))
 	
-	# distribute the column slices with spark
-	# might need to pass in desired num slices here?
+		# distribute the column slices with spark
+		# might need to pass in desired num slices here?
 	
-	t1 <- proc.time()
-	subMatRDD <- parallelize(sc,listMat,slices)
-	overhead <- as.numeric((proc.time() - t1)["elapsed"])
+		tover <- proc.time()
+		subMatRDD <- parallelize(sc,listMat,slices)
+		overhead <- as.numeric((proc.time() - tover)["elapsed"])
 	
-	# factor each slice
-	factorsRDD <- lapplyPartition(subMatRDD,factorCols)
+		# factor each slice
+		factorsRDD <- lapplyPartition(subMatRDD,factorCols)
 	
-	# collect the results and project them onto the first column slice
-	factorList <- collect(factorsRDD)
-	matrixList <- lapply(seq(1,length(factorList)), function(i) factorList[[i]][[1]])
-	subTimeList <- lapply(seq(1,length(factorList)), function(i) factorList[[i]][[2]])
-	subTime <- max(unlist(subTimeList))
-	cat("Time for subproblems: \n")
-	print(subTimeList)
+		# collect the results and project them onto the first column slice
+		factorList <- collect(factorsRDD)
+		matrixList <- lapply(seq(1,length(factorList)), function(i) list(factorList[[i]][[1]],factorList[[i]][[2]]))
+		subTimeList <- lapply(seq(1,length(factorList)), function(i) factorList[[i]][[3]])
+		subTime <- max(unlist(subTimeList))
+		cat("Time for subproblems: \n")
+		print(subTimeList)
 
-	# collect the results and project them onto a low rank matrix
-	if(randProject) {
-		cat("Doing random projection to combine submatrices...\n")
-		result <- dfcRandProject(matrixList)
+		# collect the results and project them onto a low rank matrix
+		if(randProject) {
+			cat("Doing random projection to combine submatrices...\n")
+			result <- dfcRandProject(matrixList)
+		} else { 
+			cat("Projecting all submatrices onto first submatrix...\n")
+			result <- dfcProject(matrixList)
+		}
+		projTime <- result[[3]]
+		cat("Time for collection: ",projTime,"\n")
 	} else {
-		cat("Projecting all submatrices onto first submatrix...\n")
-		result <- dfcProject(matrixList)
-	}
-	projTime <- result[[3]]
-	cat("Time for collection: ",projTime,"\n")
-
+		result <- apgBase(mat,iters,singleSlice,writeby)
+		overhead <- 0
+		subTime <- result[[3]]
+		projTime <- 0
+	}				
+		
 	# get the error
 	#print(result[[1]]%*%t(result[[2]]))
 	error <- errorCal( mat, result[[1]], result[[2]])
@@ -353,6 +374,8 @@ dfc <- function(mat, sc, slices, iters, randProject=TRUE) {
 sc <- sparkR.init(args[[1]], "DFCR")
 
 slices <- ifelse(length(args) > 1, as.integer(args[[2]]),2)
+single <- F
+if(args[[1]] == "local[1]") {single <- T}
 
 
 # Test matrix init
@@ -375,6 +398,9 @@ slices <- ifelse(length(args) > 1, as.integer(args[[2]]),2)
 # Read matrix from file
 maskedFile <- args[[3]]
 iterations <- args[[4]]
+if(length(args) > 5) {
+	outfile <- args[[6]]
+}
 randProj <- T
 if(length(args) > 4) {
 	if(args[[5]] == 'F') {
@@ -390,9 +416,10 @@ revealedEntries <- nnzero(maskedM)
 #trueV <- read(trueVFile)
 
 # Run DFC
-t1 <- proc.time()
-outs <- dfc(maskedM, sc, slices, iterations, randProject=randProj)
-totalTime <- as.numeric((proc.time() - t1)["elapsed"])
+
+ttot <- proc.time()
+outs <- dfc(maskedM, sc, slices, iterations, randProject=randProj,singleSlice=single,writeby=10)
+totalTime <- as.numeric((proc.time() - ttot)["elapsed"])
 cat("RMSE for the entire matrix: ",outs[[1]],"\n")
 cat("Total time for DFC: ",totalTime,"\n")
 #cat("Average magnitude of entries of M: ",sum(abs(maskedM))/revealedEntries,"\n")
