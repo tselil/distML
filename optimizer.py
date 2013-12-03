@@ -1,4 +1,5 @@
 import sys
+from subprocess import call
 import getopts
 import csv
 from collections import defaultdict
@@ -11,6 +12,11 @@ price = 1
 TIME_FLAG = 0
 BUDGET_FLAG = 7
 ERROR_FLAG = 2
+
+# Global variables representing maxs and stuff
+MAX_TIME = 60*60*24 # One day
+MAX_ERROR = 2
+MAX_BUDGET = 1000000*MAX_TIME # ONE MILLION DOLLARS
 
 # Factor to determine nearness of matrix sizes
 sizeFactor = 2
@@ -100,15 +106,21 @@ def updateData(fileName,tup):
 # Main - Run DFC with chosen params
 NUM_PARAMS = 5
 def main(argv):
-	 inputfile = ""
+	 inputfile = "default"
 	 outputfile = ""
+	 time = "unset"
+	 error = "unset"
+	 budget = "unset"
+	 optParam = ERROR_FLAG
+	 explore = False
+	 masterURL = "local"
 	 try:
-		  opts, args = getopt.getopt(argv,"hi:o:b:t:e:",\
-						["ifile=","ofile=","max_budget=","max_time=","max_error"])
+		  opts, args = getopt.getopt(argv,"hi:o:b:t:e:xu:")
 		  if ("-b" in argv and "-t" in argv and "-e" in argv):
-				raise Exception('numargs'):
-					 print 'At least two of -b,-t,-e must appear.\n'
-	 except getopt.GetoptError:
+				raise Exception('Too many optimization params')
+		  if ("-b" not in argv and "-t" not in argv and "-e" not in argv):
+				raise Exception('Not enough optimization params')
+	 except:
 		  print 'test.py -i <inputfile> -o <outputfile> -b <max_budget>\
 							  -t <max_time> -e <max_error>\n'
 		  print 'Exactly two of -b,-t,-e must appear.\n'
@@ -119,10 +131,44 @@ def main(argv):
 				sys.exit()
 		  elif opt in ("-i", "--ifile"):
 				inputfile = arg
-		  elif opt in ("-o", "--ofile"):
+		  elif opt == "-o":
 				outputfile = arg
-	 print 'Input file is "', inputfile
-	 print 'Output file is "', outputfile
+		  elif opt == "-b":
+				budget = float(arg)
+		  elif opt == "-e":
+				error = float(arg)
+		  elif opt == "-t":
+				time = float(arg)
+		  elif opt == "-x":
+				explore = True
+		  elif opt == "-u":
+				masterURL = arg
+	 if outputfile == "":
+		  outputfile = inputfile+'_out'
 
+	 if time == "unset":
+		  optParam = TIME_FLAG
+	 elif error == "unset":
+		  optParam = ERROR_FLAG
+	 else budget == "unset":
+		  optParam = BUDGET_FLAG
+
+	 f = open(inputfile,'r')
+	 f.next()
+	 matInfo = f.next()
+	 f.close()
+	 m = int(matInfo[0])
+	 n = int(matInfo[1])
+	 p = float(matInfo[2])/(m*n)
+	 tupList = loadData(inputfile, time, budget, error, m, n, p)
+	 tupList = averageTuples(tupList)
+	 config = chooseParams(tupList, optParam, explore)
+	 
+	 # Call DFC
+	 slices = config[1]
+	 iterations = config[3]
+	 call("~/spark/sparkR DFC.R "+masterURL+" "+inputfile+" "\
+	                             +str(iterations)+" "+outputfile)
+	 
 if __name__=="__main__":
 	 main(sys.argv[1:])
