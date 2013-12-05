@@ -1,15 +1,16 @@
 #! /usr/bin/python
 
-# vim: tabstop=4 expandtab shiftwidth=4 softtabstop=4
+# vim: tabstop=4 expandtab shiftwidth=4 softtabstop=4 noexpandtab
 
 #./optimizer.py -m ~/persistent-hdfs/datasets/2k/outputfile200090_2_masked.out -d dataTable.csv -b 800 -t 200 -u spark://ec2-54-201-131-211.us-west-2.compute.amazonaws.com:7707
 
 import sys
-from subprocess import call
+import subprocess
 import getopt
 import csv
 from collections import defaultdict
 import random
+import string
 
 # Price per slice
 price = 1
@@ -26,6 +27,11 @@ MAX_BUDGET = 1000000*MAX_TIME # ONE MILLION DOLLARS
 
 # Factor to determine nearness of matrix sizes
 sizeFactor = 2
+
+# Usage message
+helpMSG = "./optimizer.py -m <matrix> -d <data> -b <max_budget> -t\
+							 <max_time> -e <max_error> -u <masterURL>\
+							 (-x)\n Exactly two of -b,-t,-e must appear.\n"
 
 # Check if an m1-by-n1 matrix with p1 entries revealed
 # is "near" in size to an m2-by-n2 matrix with p2 entries revealed
@@ -68,8 +74,6 @@ def loadData(fileName, time, budget, error, m, n, p):
 		errorOK = float(row[2]) <= error
 		sizeOK = isNear(float(row[4]),float(row[5]),float(row[6]),m,n,p)
 		if (timeOK and budgetOK and errorOK and sizeOK):
-			print row
-			print [float(row[4]),float(row[5]),float(row[6]),m,n,p]
 			dataTuples += [tuple(map(float,row)+[float(row[1])*float(row[0])*price])]
 	dataFile.close()
 	return dataTuples
@@ -117,7 +121,6 @@ NUM_PARAMS = 5
 def main(argv):
 	datafile = "dataTable.csv"
 	matrixfile = "default"
-	outputfile = ""
 	time = "unset"
 	error = "unset"
 	budget = "unset"
@@ -125,29 +128,22 @@ def main(argv):
 	explore = False
 	masterURL = "local"
 	try:
-		opts, args = getopt.getopt(argv,"hd:m:o:b:t:e:xu:")
+		opts, args = getopt.getopt(argv,"hd:m:b:t:e:xu:")
 		if ("-b" in argv and "-t" in argv and "-e" in argv):
 			   raise Exception('Too many optimization params')
 		if ("-b" not in argv and "-t" not in argv and "-e" not in argv):
 			   raise Exception('Not enough optimization params')
 	except: 
-		print './optimizer.py -m <matrix> -d <data> -b <max_budget> -t <max_time>\
-													-e <max_error> -u <masterURL> (-x) (-o <outputfile>)'
-		print 'Exactly two of -b,-t,-e must appear.\n'
+		print helpMSG
 		sys.exit(2)
-	print opts
 	for opt, arg in opts:
 		if opt == '-h':
-			print 'test.py -i <inputfile> -o <outputfile>'
+			print helpMSG
 			sys.exit()
 		elif opt in ("-d"):
 			dataFile = arg
-			print dataFile
 		elif opt in ("-m"):
 			matrixFile = arg
-			print matrixFile
-		elif opt == "-o":
-			outputfile = arg
 		elif opt == "-b":
 			budget = float(arg)
 		elif opt == "-e":
@@ -158,16 +154,8 @@ def main(argv):
 			explore = True
 		elif opt == "-u":
 			masterURL = arg
-	if outputfile == "":
-		outputfile = matrixFile+'_out'
-	
-	if time == 'unset':
-		optParam = TIME_FLAG 
-	elif error == "unset":
-		optParam = ERROR_FLAG
-	elif budget == "unset":
-		optParam = BUDGET_FLAG
 
+	# Set size parameters
 	f = open(matrixFile,'r')
 	f.readline()
 	matInfo = f.readline().split(" ")
@@ -175,17 +163,44 @@ def main(argv):
 	m = int(matInfo[0])
 	n = int(matInfo[1])
 	p = float(matInfo[2])/(m*n)
+	
+	# Decide which parameter to otimize
+	if time == 'unset':
+		optParam = TIME_FLAG 
+	elif error == "unset":
+		optParam = ERROR_FLAG
+	elif budget == "unset":
+		optParam = BUDGET_FLAG
+
+	# Access the data table and choose relevant entries
 	tupList = loadData(dataFile, time, budget, error, m, n, p)
 	tupList = averageTuples(tupList)
 	config = chooseParams(tupList, optParam, explore)
 	
-	 # Call DFC
+	# Call DFC
 	slices = config[1]
 	iterations = config[3]
-	cmd =["~/spark/sparkR", "~/distML/DFC.R", masterURL, str(slices), matrixFile, str(iterations), outputfile]
+	cmd =" ".join(["~/spark/sparkR", "DFC.R", masterURL, str(slices), matrixFile, str(iterations)])
 	print config
 	print '\n\n\n\n\n'
-	call(cmd, shell=True)
+	output = subprocess.Popen(cmd, shell=True,stdout=subprocess.PIPE).communicate()[0]
+	
+	# Super horrible hack to get the ouput of the R command
+	outIndex = string.find(output,"Total time for DFC:")
+	realOut = output[outIndex:]
+	outLines = realOut.split("\n")
+	rmse = float((outLines[2].split(" "))[1])
+	overhead = float((outLines[5].split(" "))[1])
+	subproblemTime = float((outLines[8].split(" "))[1])
+	collectTime = float((outLines[11].split(" "))[1])
+	print rmse
+	print overhead
+	print subproblemTime
+	print collectTime
+	time = overhead + subproblemTime + collectTime
+	# Update the data table
+	outTup = (time,slices,rmse,iterations,m,n,p)
+	updateData(dataFile,outTup)
 	 
 if __name__=="__main__":
 	main(sys.argv[1:])
