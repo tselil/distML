@@ -138,7 +138,7 @@ apgBase <- function(mat,maxiter,writeout = F, writeby = 10) {
 	m <- dim(mat)[1]
 	n <- dim(mat)[2]
 	IIJJ <- which(mat != 0,arr.ind = T) # list of nonzero indices
-	p <- length(IIJJ) # number of nonzero entries
+	#p <- length(IIJJ) # number of nonzero entries
 	II <- IIJJ[,1] # nonzero row indices
 	JJ <- IIJJ[,2] # nonzero col indices
 	L <- 1 # Lipschitz constant for 1/2*||Ax - b||_2^2
@@ -193,10 +193,10 @@ apgBase <- function(mat,maxiter,writeout = F, writeby = 10) {
 		num_pos_sv <- length(Shlf)
 		
 		Sig <- diag(x = Shlf,num_pos_sv,num_pos_sv)
-		
 		U <- (svd$u[,1:num_pos_sv] %*% Sig)
 		V <- (svd$v[,1:num_pos_sv] %*% Sig)
-		mX <- sparseMatrix(i=II,j=JJ,x=maskUV(as.matrix(U),as.matrix(V),II,JJ)) # Call into C++ code
+		msUV <- maskUV(as.matrix(U),as.matrix(V),II,JJ)
+		mX <- sparseMatrix(i=II,j=JJ,x=msUV,dims=c(m,n)) # Call into C++ code
 		t <- (1+sqrt(1+4*t^2))/2
 		beta <- (told - 1)/t
 		mY <- (1+beta)*mX - beta*mXold	
@@ -313,7 +313,7 @@ errorCal <- function(mat, U, V){
 	numNonzero <- length(IIJJ)
 	II <- IIJJ[,1]
 	JJ <- IIJJ[,2]
-	mX <- sparseMatrix(i=II,j=JJ,x=maskUV(as.matrix(U),as.matrix(V),II,JJ)) # Call into C++ code
+	mX <- sparseMatrix(i=II,j=JJ,x=maskUV(as.matrix(U),as.matrix(V),II,JJ),dims=dim(mat)) # Call into C++ code
 	# Frobenius norm/sqrt(num_nonzero) = root mean squared error
 	rmse <- norm(mat - mX,type = 'F')/sqrt(numNonzero)
 	rmse
