@@ -100,34 +100,42 @@
     \begin{block}{\huge Optimizer Design}
 \vspace{.5cm}
 
+\begin{center}
+\begin{figure}
+\fbox{\includegraphics[width=0.6\textwidth]{BoxDiagram.pdf}}
+\end{figure}
+\end{center}
+
+
+Additionally, our optimizer is:
 \begin{itemize}
 \item Architecture-independent
 \begin{itemize} {\large
-\item Chooses parameters based on statistics from prior jobs
-\item sdflksad
+\item Stores statistics from prior jobs on the architecture in question
+\item Parameters chosen based on statistics for the specific architecture
 }
 \end{itemize}
+\vspace{.5cm}
 
 \item Adaptive
 \begin{itemize} {\large
-\item Stores statistics from previous jobs on instances with similar distribution, and improves predictions with time.
-\item sdf 
+\item Stores statistics from previous jobs on instances with similar distribution
+\item Prediction of the optimal parameters improves as the optimizer learns
 }
 \end{itemize}
+\vspace{.5cm}
 
-\item Local-optimum Avoiding
+\item Avoids Local Optima
 \begin{itemize} {\large
-\item In ``explore mode'' we choose the instance parameters randomly, according to a distribution specified by the
-\item sdf }
+\item When one choice of parameters already encountered is slightly better, there is a risk of getting stuck at a local optimum
+\item In ``explore mode'' we choose the instance parameters randomly, with probability proportional to the relative suitability of the parameters
+}
 \end{itemize}
 \end{itemize}
 
-\begin{center}
-\begin{figure}
-\fbox{\includegraphics[width=0.7\textwidth]
-{BoxDiagram.pdf}}
-\end{figure}
-\end{center}
+\vspace{.7cm}
+
+
 
 
 \end{block}
