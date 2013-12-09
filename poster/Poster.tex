@@ -1,0 +1,238 @@
+\documentclass[final]{beamer}
+\mode<presentation>
+{
+  \usetheme{Szeged}
+\usecolortheme{crane}
+}
+
+
+\usepackage{times}
+\usepackage{multicol}
+\usepackage{amsmath,amssymb,amsthm}
+
+\newtheorem{alg}{Algorithm}
+
+\newcommand{\argmax}{\text{argmax}}
+\usepackage{float, caption, subcaption}
+\usepackage[english]{babel}
+\usepackage[latin1]{inputenc}
+\usepackage{beamerposter}  % e.g. custom size poster
+  \title[Hangman]{{\veryHuge An Optimization Layer for Distributed Matrix Computations }}
+  \author[Schramm \& Weitz]{{\Large Jonah Brown Cohen, Tselil Schramm, and Ben Weitz}}
+\date{}
+
+  \begin{document}
+{\large
+  \begin{frame}{} 
+
+\maketitle
+
+\vspace{-3cm}
+\begin{center}
+\begin{columns}[t]
+\begin{column}{0.32\textwidth}
+
+%----------------------------------------------------------------------------------
+
+    \begin{block}{\huge Background}
+\vspace{.5cm}
+
+\begin{itemize}
+\item SparkR
+\begin{itemize} {\large
+\item Chooses parameters based on statistics from prior jobs
+\item sdflksad
+}
+\end{itemize}
+
+\item Adaptive
+\begin{itemize} {\large
+\item sdfad 
+\item sdf 
+}
+\end{itemize}
+
+\item DFC
+\begin{itemize} {\large
+\item sdfad 
+\item sdf }
+\end{itemize}
+\end{itemize}
+
+\begin{center}
+\begin{figure}
+\fbox{\includegraphics[width=0.7\textwidth]
+{BoxDiagram.pdf}}
+\end{figure}
+\end{center}
+
+
+\end{block}
+
+    \begin{block}{\huge Motivation}
+\vspace{.4cm}
+\begin{itemize}
+\item Distributed machine learning algorithms
+\item Tradeoffs--time,cost,error
+\item optimize: humans are dumb as shit
+\end{itemize}
+
+\vspace{.5cm}
+
+\end{block}
+
+\vspace{1.2cm}
+
+    \begin{block}{\huge Objective}
+\vspace{.5cm}
+{\Large Automate parameter choice for distributed matrix computations.}
+    \end{block}
+
+%----------------------------------------------------------------------------------
+
+\vspace{1.2cm}
+
+   
+\end{column}
+
+\begin{column}{0.32\textwidth}
+ 
+    \begin{block}{\huge Optimizer Design}
+\vspace{.5cm}
+
+\begin{itemize}
+\item Architecture-independent
+\begin{itemize} {\large
+\item Chooses parameters based on statistics from prior jobs
+\item sdflksad
+}
+\end{itemize}
+
+\item Adaptive
+\begin{itemize} {\large
+\item sdfad 
+\item sdf 
+}
+\end{itemize}
+
+\item Local-optimum Avoiding
+\begin{itemize} {\large
+\item sdfad 
+\item sdf }
+\end{itemize}
+\end{itemize}
+
+\begin{center}
+\begin{figure}
+\fbox{\includegraphics[width=0.7\textwidth]
+{BoxDiagram.pdf}}
+\end{figure}
+\end{center}
+
+
+\end{block}
+
+\vspace{1.5cm}
+
+    \begin{block}{\huge Implementation}
+
+\vspace{.5cm}
+\begin{itemize}
+\item The words chosen by the adversary are hard,
+\begin{itemize}{\large
+\item But once you know theyre difficult it's easy to adjust.}
+\end{itemize}
+\item Top 12 words {\color{orange}(probability of losing in 6 turns)}:
+\end{itemize}
+
+    \end{block}
+
+
+\end{column}
+
+\begin{column}{0.32\textwidth}
+
+       \begin{block}{\huge Evaluation}
+
+\vspace{1cm}
+{\Large Can the AI determine the correct memory of a player?}
+\begin{itemize}
+\item Generated data for players with restricted memory.
+\begin{itemize} {\large
+\item Extremely large number of samples required for AIC.
+\item Can only implement model with memory parameters $1$ through $3$.}
+\end{itemize}
+\item Computed (corrected) AIC and BIC values
+\begin{itemize} {\large
+\item AIC consistently overestimates.
+\item BIC consistently underestimates.}
+\end{itemize}
+\item Failure of AIC due to information available to player not captured by the model.
+\end{itemize}
+
+\vspace{1cm}
+
+\begin{figure}
+	\begin{subfigure}[b]{.45\textwidth}
+\begin{center}
+		\fbox{\includegraphics[width=\textwidth]{BoxDiagram.pdf}}
+		\caption{AIC values.}
+\end{center}
+	\end{subfigure}
+\hspace{1cm}
+	\begin{subfigure}[b]{.45\textwidth}
+\begin{center}
+		\fbox{\includegraphics[width=\textwidth]{BoxDiagram.pdf}}
+		\caption{BIC values.}
+\end{center}
+	\end{subfigure}
+\hfill
+	\caption{Plots of AIC and BIC Values against the Memory Parameter for a Dictionary Player with True Memory $2$}	
+\end{figure}
+    \end{block}
+
+\vspace{1.5cm}
+
+    \begin{block}{\huge Future Work}
+
+\vspace{1cm}
+{\Large Achievements:}
+\begin{itemize}
+\item Can learn a player's strategy assuming restricted memory.
+\item Can choose words that are hard for that player.
+\item Compiled a list of hard words for a dictionary-using frequency player.
+ \begin{itemize}{\large
+\item  Also hard for regular humans.}
+\end{itemize}
+\end{itemize}
+
+\vspace{.8cm}
+
+{\Large Future Work:}
+\begin{itemize} 
+\item Online Learning.
+\item Foiling an Adaptive Player.
+\begin{itemize}{\large
+\item  Can we learn an adaptive strategy quickly and counter it? 
+\item Is there a Nash Equilibrium to the responses?}
+\end{itemize}
+\end{itemize}
+\vspace{.5cm}
+    \end{block}
+
+\vspace{1.5cm}
+
+    \begin{block}{\huge Acknowledgements}
+We would like to thank:
+\begin{itemize}
+\item Anthony.
+\item UC Berkeley and the NSF for providing funds and resources.
+\end{itemize}
+    \end{block}
+\end{column}
+
+\end{columns}
+\end{center}
+\vspace{1.5cm}
+  \end{frame}
+  \end{document}
