@@ -34,47 +34,37 @@
 
 %----------------------------------------------------------------------------------
 
-    \begin{block}{\huge Background}
+    \begin{block}{\huge Motivation}
 \vspace{.5cm}
 
 \begin{itemize}
-\item SparkR
+\item Big data companies like Facebook, Netlix, or Google perform large-scale distributed matrix computations
 \begin{itemize} {\large
-\item Chooses parameters based on statistics from prior jobs
-\item sdflksad
-}
-\end{itemize}
-
-\item Adaptive
-\begin{itemize} {\large
-\item sdfad 
-\item sdf 
-}
-\end{itemize}
-
-\item DFC
-\begin{itemize} {\large
-\item sdfad 
-\item sdf }
-\end{itemize}
-\end{itemize}
-
+\item Computations experience {\bf trade-offs} in accuracy vs. time or money. 
 \begin{center}
 \begin{figure}
-\fbox{\includegraphics[width=0.7\textwidth]
-{BoxDiagram.pdf}}
+\fbox{\includegraphics[width=0.35\textwidth]
+{Motivations.pdf}}
 \end{figure}
 \end{center}
-
+\item Human operators manually tweak parameters and partitioning
+\item Humans are prone to error and costly to hire!
+}
+\end{itemize}
+\item Solution: Build an optimization layer to automatically tweak and manage these computations
+\begin{itemize} {\large 
+\item Learn to adjust parameters from past computations
+\item Incoming jobs come with budgets of time or accuracy that must be met
+}
+\end{itemize}
+\end{itemize}
 
 \end{block}
 
-    \begin{block}{\huge Motivation}
+    \begin{block}{\huge Objective}
 \vspace{.4cm}
 \begin{itemize}
-\item Distributed machine learning algorithms
-\item Tradeoffs--time,cost,error
-\item optimize: humans are dumb as shit
+\item {\bf \large Create an optimizer that automatically picks algorithm parameters and the degree of data partitioning to meet budget specifications}
 \end{itemize}
 
 \vspace{.5cm}
@@ -83,10 +73,20 @@
 
 \vspace{1.2cm}
 
-    \begin{block}{\huge Objective}
+    \begin{block}{\huge Framework}
 \vspace{.5cm}
-{\Large Automate parameter choice for distributed matrix computations.}
-    \end{block}
+\begin{itemize}
+\item Optimizer built on Python
+\item Interfaces with matrix algorithms implemented in SparkR or MLBase
+\item Optimizer interfaces directly with algorithms, all parameters hidden from user
+\end{itemize}    
+\begin{center}
+\begin{figure}
+\fbox{\includegraphics[width=0.5\textwidth]
+{SysDiagram.pdf}}
+\end{figure}
+\end{center}
+\end{block}
 
 %----------------------------------------------------------------------------------
 

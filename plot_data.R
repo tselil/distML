@@ -1,41 +1,47 @@
 # PARAMS ###########################################
 size <- 2000
 masked <- 90
-slices <- c(1,2,4,6,8,10)
-trials <- c(2,3,4,5,6,7,8)
+slices <- c(1,2,4,6,10)
+parts <- c(5,6,7)
+II <- length(slices) # Slices range
+JJ <- length(parts) # Trials range
 plot_colors <- c("red","blue","green","purple","black","orange")
 ######################################################
-
 file <- paste(size,masked,sep="")
-filename <- paste("results/outputfile",file,sep="")
-title <- paste("Average RMSE vs. Time for a ",size," x ",size," MC Problem over ",length(trials)," Trials",sep="")
+filename <- paste("results/movielens/movielens10M_part1",file,sep="")
+title <- paste("Average RMSE vs. Time for a ",size," x ",size," MC Problem over ",length(parts)," Trials",sep="")
 #title2 <- "RMSE vs. Money for a 2000 x 2000 MC Problem"
 outputfile <- paste(file,"RvT_graph.pdf",sep="")
 
 outputfile2 <- paste(file,"RvD_graph.pdf",sep="")
 
+# filenames[[I]][[J]] is the filename of data for slices[I] on trials[J]
+filenames <- lapply(seq(1,length(slices)), function(i) lapply(seq(1,length(parts)), function(j) paste("results/movielens/movielens10M_part",parts[j],".mm.slices",slices[i],".results.out",sep="")))
+
 pdf(outputfile)
 x <- list()
 y <- list()
-for(i in seq(1,length(slices))) {
+for(i in seq(1,II)) {
 	# x[[i]] and y[[i]] are lists such that x[[i]][[j]] contains the data for the jth run with i slices
-	data <- lapply(seq(1:length(trials)), function(t) read.table(paste(filename,"_",trials[t],"_masked.out.slices",slices[i],".results.out",sep=""),header=T,sep="\t"))
+	data <- lapply(seq(1,JJ), function(j) read.table(filenames[[i]][[j]],header=T,sep="\t"))
 	x[[i]] <- lapply(data, function(d) (d$"subproblem.time"+d$"projection.time"))
 	y[[i]] <- lapply(data, function(d) d$"RMSE")
 }
-xav <- as.list(rep(0,length(slices)))
-yav <- as.list(rep(0,length(slices)))
-xsd <- as.list(rep(0,length(slices)))
-ysd <- as.list(rep(0,length(slices)))
+
+xav <- lapply(seq(1,II), function(i) c(0,0,0,0,0))
+yav <- lapply(seq(1,II), function(i) c(0,0,0,0,0))
+xsd <- lapply(seq(1,II), function(i) c(0,0,0,0,0))
+ysd <- lapply(seq(1,II), function(i) c(0,0,0,0,0))
 
 # Average the data for each slice. xav is a list such that xav[[i]] is the average data for i slices
 # xsd is a list such that xsd[[i]] is a vector with the SD of xav[[i]]
-for(i in seq(1,length(slices))) {
-	for(j in seq(1,length(trials))) {
-		xav[[i]] <- xav[[i]] + x[[i]][[j]]/length(trials)
-		yav[[i]] <- yav[[i]] + y[[i]][[j]]/length(trials)
+for(i in seq(1,II)) {
+	for(j in seq(1,JJ)) {
+		xav[[i]] <- xav[[i]] + x[[i]][[j]]/JJ
+		yav[[i]] <- yav[[i]] + y[[i]][[j]]/JJ
+		
 	}
-	for(j in seq(1,length(trials))) {
+	for(j in seq(1,JJ)) {
 		xsd[[i]] <- xsd[[i]] + (x[[i]][[j]]-xav[[i]])^2
 		ysd[[i]] <- ysd[[i]] + (y[[i]][[j]]-yav[[i]])^2
 	}
@@ -57,7 +63,8 @@ for(i in seq(1,length(x))) {
 	segments(xav[[i]]-epsilon,yav[[i]]-ysd[[i]],xav[[i]]+epsilon,yav[[i]]-ysd[[i]],lwd=2)
 	segments(xav[[i]]-epsilon,yav[[i]]+ysd[[i]],xav[[i]]+epsilon,yav[[i]]+ysd[[i]],lwd=2)
 }
-legend(250,.25,c("1 Slice","2 Slices", "4 Slices", "6 Slices", "8 Slices", "10 Slices"),cex=.8,col=plot_colors,pch=21,lty=1)
+legendcap = unlist(lapply(seq(1,II), function(i) paste(slices[i]," Slice",sep="")))
+legend(600,.8,legendcap,cex=.8,col=plot_colors,pch=21,lty=1)
 dev.off()
 
 #pdf(outputfile2)
