@@ -155,23 +155,11 @@
        \begin{block}{\huge Evaluation}
 
 \vspace{1cm}
-{\Large Can the AI determine the correct memory of a player?}
+{\Large Tested on Synthetic and Real-world Data}
 \begin{itemize}
-\item Generated data for players with restricted memory.
+\item Gaussian Random Matrices
 \begin{itemize} {\large
-\item Extremely large number of samples required for AIC.
-\item Can only implement model with memory parameters $1$ through $3$.}
-\end{itemize}
-\item Computed (corrected) AIC and BIC values
-\begin{itemize} {\large
-\item AIC consistently overestimates.
-\item BIC consistently underestimates.}
-\end{itemize}
-\item Failure of AIC due to information available to player not captured by the model.
-\end{itemize}
-
-\vspace{1cm}
-
+\item Trained on eight random matrices and tested on a ninth}
 \begin{figure}
 	\begin{subfigure}[b]{.45\textwidth}
 \begin{center}
@@ -189,33 +177,43 @@
 \hfill
 	\caption{Plots of AIC and BIC Values against the Memory Parameter for a Dictionary Player with True Memory $2$}	
 \end{figure}
+\end{itemize}
+
+\item MovieLens 10M Dataset
+\begin{itemize} {\large
+\item Partitioned dataset into 7 parts
+\item Trained on all but one partition and tested on the remainder}
+\begin{figure}
+	\begin{subfigure}[b]{.45\textwidth}
+\begin{center}
+		\fbox{\includegraphics[width=\textwidth]{BoxDiagram.pdf}}
+		\caption{AIC values.}
+\end{center}
+	\end{subfigure}
+\hspace{1cm}
+	\begin{subfigure}[b]{.45\textwidth}
+\begin{center}
+		\fbox{\includegraphics[width=\textwidth]{BoxDiagram.pdf}}
+		\caption{BIC values.}
+\end{center}
+	\end{subfigure}
+\hfill
+	\caption{Plots of AIC and BIC Values against the Memory Parameter for a Dictionary Player with True Memory $2$}	
+\end{figure}
+\end{itemize}
+\item Optimizer performs as well as manually setting the parameter!
+\end{itemize}
+
+\vspace{1cm}
     \end{block}
 
 \vspace{1.5cm}
 
     \begin{block}{\huge Future Work}
-
-\vspace{1cm}
-{\Large Achievements:}
 \begin{itemize}
-\item Can learn a player's strategy assuming restricted memory.
-\item Can choose words that are hard for that player.
-\item Compiled a list of hard words for a dictionary-using frequency player.
- \begin{itemize}{\large
-\item  Also hard for regular humans.}
-\end{itemize}
-\end{itemize}
-
-\vspace{.8cm}
-
-{\Large Future Work:}
-\begin{itemize} 
-\item Online Learning.
-\item Foiling an Adaptive Player.
-\begin{itemize}{\large
-\item  Can we learn an adaptive strategy quickly and counter it? 
-\item Is there a Nash Equilibrium to the responses?}
-\end{itemize}
+\item Optimize over space of algorithms in addition to space of parameters
+\item Avoid RAM bottlenecks by distributing collect step
+\item Handle novel or different jobs
 \end{itemize}
 \vspace{.5cm}
     \end{block}
@@ -225,7 +223,7 @@
     \begin{block}{\huge Acknowledgements}
 We would like to thank:
 \begin{itemize}
-\item Anthony.
+\item Shivaram Venkataraman, Ameet Talwalkar, Prof. Anthony Joseph, and Prof. John Kubiatowicz
 \item UC Berkeley and the NSF for providing funds and resources.
 \end{itemize}
     \end{block}
