@@ -27,12 +27,12 @@ for dataFile in os.listdir("./results/movielens"):
 					S = g.readline().split(" ")
 					m = S[0]
 					n = S[1]
-					rev = S[2]
+					rev = float(S[2])/(int(m)*int(n))
 					g.close()
 			#m = dataFile[10:14]
 			#n = m
 			#rev = 0.1
-			o.write(str(time)+"\t"+str(row[0])+"\t"+str(row[2])+"\t"+str(row[1])+"\t"+str(m)+"\t"+str(n)+"\t"+str(rev))
+			o.write(str(time)+"\t"+str(row[0])+"\t"+str(row[2])+"\t"+str(row[1])+"\t"+str(m)+"\t"+str(n)+"\t"+str(rev)+"\n")
 	except:
 		continue
 	f.close()
