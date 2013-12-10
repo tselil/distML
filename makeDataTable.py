@@ -16,11 +16,6 @@ for i in range(1,8):
 		f = open("./results/movielens/"+dataFile, 'rb')
 		r = csv.reader(f, delimiter='\t', quotechar='|')
 		try:
-			for row in r:
-				map(str.strip, row)
-				if row[0] == 'slices':
-					continue
-				time = float(row[3]) + float(row[4]) +float(row[5])
 			for matFile in os.listdir("./datasets/movielens"):
 				if matFile in dataFile:
 					g = open("./datasets/movielens/"+matFile, 'rb')
@@ -30,11 +25,18 @@ for i in range(1,8):
 					n = S[1]
 					rev = float(S[2])/(int(m)*int(n))
 					g.close()
+			for row in r:
+				map(str.strip, row)
+				if row[0] == 'slices':
+					continue
+				time = float(row[3]) + float(row[4]) +float(row[5])
 #				m = dataFile[10:14]
 #				n = m
 #				rev = (100.0 - float(dataFile[14:16]))/100.0
 				string = str(time)+"\t"+str(row[0])+"\t"+str(row[2])+"\t"+str(row[1])+"\t"+str(m)+"\t"+str(n)+"\t"+str(rev)+"\n"
+				print string
 				o.write(string)
+				print "OK"
 		except:
 			continue
 		f.close()
