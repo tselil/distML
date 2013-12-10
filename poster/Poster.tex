@@ -45,7 +45,7 @@
 \begin{figure}
 \fbox{\includegraphics[width=0.35\textwidth]
 {Motivations.pdf}}
-\caption{CAPTION HERE AAARGGHHHH}
+\caption{Time and Error Tradeoffs}
 \end{figure}
 \end{center}
 \item Human operators manually tweak parameters and partitioning
@@ -77,19 +77,24 @@
 
     \begin{block}{\huge Framework}
 \vspace{.5cm}
+\begin{columns}[t]
+\begin{column}{0.4\textwidth}
 \begin{itemize}
 \item Optimizer interface to user: input data, methods to run, and time, error, and financial budgets
 \item Optimizer then interfaces with matrix algorithms implemented within a parallel framework (such as an algorithm wirtten in SparkR or methods from MLBase)
 \item All parameter selection hidden from user
 \end{itemize}    
-\vspace{.7cm}
+\end{column}
+\begin{column}{.4\textwidth}
 \begin{center}
 \begin{figure}
-\fbox{\includegraphics[width=0.5\textwidth]
+\fbox{\includegraphics[width=0.75\textwidth]
 {SysDiagram.pdf}}
-\caption[width=0.5\textwidth]{Our optimizer provides an interface to the user, through which the user specifies the algorithm and a time, error, and monetary budget. The optimizer then calls down to the matrix computation framework with the appropriate parameters.}
+\caption[width=\textwidth]{Our optimizer provides an interface to the user, through which the user specifies the algorithm and a time, error, and monetary budget. The optimizer then calls down to the matrix computation framework with the appropriate parameters.}
 \end{figure}
 \end{center}
+\end{column}
+\end{columns}
 \end{block}
 
 %----------------------------------------------------------------------------------
@@ -210,14 +215,14 @@ Our optimizer is:
 \begin{figure}
 	\begin{subfigure}[b]{.45\textwidth}
 \begin{center}
-		\fbox{\includegraphics[width=\textwidth]{BoxDiagram.pdf}}
+		\fbox{\includegraphics[width=\textwidth]{movielens10M_1_to_4_RvT_graph.pdf}}
 		\caption{Training Data}
 \end{center}
 	\end{subfigure}
 \hspace{1cm}
 	\begin{subfigure}[b]{.45\textwidth}
 \begin{center}
-		\fbox{\includegraphics[width=\textwidth]{BoxDiagram.pdf}}
+		\fbox{\includegraphics[width=\textwidth]{Opt_movielens.pdf}}
 		\caption{Testing Data}
 \end{center}
 	\end{subfigure}
@@ -233,22 +238,19 @@ Our optimizer is:
 
 \vspace{1.5cm}
 
-    \begin{block}{\huge Future Work}
+    \begin{block}{\huge Future Work and Acknowledgements}
+Some more directions for improvements include:
 \begin{itemize}
 \item Optimize over space of algorithms in addition to space of parameters
 \item Avoid RAM bottlenecks by distributing collect step
 \item Handle novel or different jobs
 \end{itemize}
-\vspace{.5cm}
-    \end{block}
-
-\vspace{1.5cm}
-
-    \begin{block}{\huge Acknowledgements}
-We would like to thank:
+We would like to give very warm thanks to:
 \begin{itemize}
-\item Shivaram Venkataraman, Ameet Talwalkar, Prof. Anthony Joseph, and Prof. John Kubiatowicz
-\item UC Berkeley and the NSF for providing funds and resources.
+\item Professors Anthony Joseph and John Kubiatowicz
+\item Ameet Talwalkar and Shivaram Venkataraman for mentoring us
+\item UC Berkeley and the NSF for providing funds and resources
+\vspace{.5cm}
 \end{itemize}
     \end{block}
 \end{column}

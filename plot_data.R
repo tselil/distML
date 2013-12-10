@@ -11,9 +11,11 @@ margins <- c(6,6,6,6)
 
 #xlims <- c(0,700)
 #ylims <- c(.06,.1)
+#legendloc <- c(400,.1)
 
-xlims <- c(0,1000)
-ylims <- c(0,1)
+xlims <- c(0,800)
+ylims <- c(.4,1)
+legendloc <- c(400,1)
 
 ######################################################
 file <- paste(size,masked,sep="")
@@ -88,7 +90,7 @@ for(i in seq(1,length(xav))) {
 }
 
 legendcap = unlist(lapply(seq(1,II), function(i) paste(slices[i]," Slice",sep="")))
-legend(400,.1,legendcap,col=plot_colors,pch=21,lty=1,cex=1.7)
+legend(legendloc[1],legendloc[2],legendcap,col=plot_colors,pch=21,lty=1,cex=1.7)
 dev.off()
 
 ########################################################################################
@@ -132,7 +134,7 @@ for(i in seq(1,length(x))) {
 	lines(x[[i]],y[[i]],type="o",col=plot_colors[i])
 }
 lines(x_opt,y_opt,type="o",col="black",lwd=2)
-legend(350,.1,c("1 Slice","2 Slices","4 Slices","6 Slices","8 Slices","Optimizer"),col=plot_colors,pch=21,lty=1,lwd=c(1,1,1,1,1,2),cex=1.7)
+legend(legendloc[1],legendloc[2],c("1 Slice","2 Slices","4 Slices","6 Slices","8 Slices","Optimizer"),col=plot_colors,pch=21,lty=1,lwd=c(1,1,1,1,1,2),cex=1.7)
 title(opt_title,cex.main=1.7)
 dev.off()
 
