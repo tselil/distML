@@ -26,17 +26,20 @@ for i in range(1,8):
 					rev = float(S[2])/(int(m)*int(n))
 					g.close()
 			for row in r:
+				print row
 				map(str.strip, row)
 				if row[0] == 'slices':
 					continue
+				if float(row[0]) > 9:
+					print row[0]
+					continue
 				time = float(row[3]) + float(row[4]) +float(row[5])
+				print time
 #				m = dataFile[10:14]
 #				n = m
 #				rev = (100.0 - float(dataFile[14:16]))/100.0
 				string = str(time)+"\t"+str(row[0])+"\t"+str(row[2])+"\t"+str(row[1])+"\t"+str(m)+"\t"+str(n)+"\t"+str(rev)+"\n"
-				print string
 				o.write(string)
-				print "OK"
 		except:
 			continue
 		f.close()
