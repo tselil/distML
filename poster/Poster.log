@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.1415926-2.5-1.40.14 (TeX Live 2013/Debian) (format=pdflatex 2013.10.29)  9 DEC 2013 16:51
+This is pdfTeX, Version 3.1415926-2.5-1.40.14 (TeX Live 2013/Debian) (format=pdflatex 2013.12.9)  10 DEC 2013 15:10
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
@@ -864,8 +864,7 @@ Package: fp-eval 1995/04/03
 ( FP-ROUND ) ) ( FP-UPN ( FP-MUL ) ( FP-ROUND ) ) ( FP-UPN ( FP-MUL )
 ( FP-ROUND ) ) ( FP-UPN ( FP-MUL ) ( FP-ROUND ) ) ( FP-UPN ( FP-MUL )
 ( FP-ROUND ) ) ( FP-UPN ( FP-MUL ) ( FP-ROUND ) ) ( FP-UPN ( FP-MUL )
-( FP-ROUND ) ) ( FP-UPN ( FP-MUL ) ( FP-ROUND ) ))
-No file Poster.aux.
+( FP-ROUND ) ) ( FP-UPN ( FP-MUL ) ( FP-ROUND ) )) (./Poster.aux)
 \openout1 = `Poster.aux'.
 
 LaTeX Font Info:    Checking defaults for OML/cmm/m/it on input line 24.
@@ -883,6 +882,7 @@ LaTeX Font Info:    ... okay on input line 24.
 LaTeX Font Info:    Checking defaults for PD1/pdf/m/n on input line 24.
 LaTeX Font Info:    ... okay on input line 24.
 LaTeX Font Info:    Try loading font information for OT1+phv on input line 24.
+
 (/usr/share/texlive/texmf-dist/tex/latex/psnfss/ot1phv.fd
 File: ot1phv.fd 2001/06/04 scalable font definitions for OT1/phv.
 )
@@ -963,6 +963,8 @@ Package: gettitlestring 2010/12/03 v1.4 Cleanup title references (HO)
 LaTeX Info: Redefining \ref on input line 24.
 LaTeX Info: Redefining \pageref on input line 24.
 LaTeX Info: Redefining \nameref on input line 24.
+
+(./Poster.out) (./Poster.out)
 \@outlinefile=\write5
 \openout5 = `Poster.out'.
 
@@ -1077,27 +1079,29 @@ File: DFC.jpg Graphic file (type jpg)
  <use DFC.jpg>
 Package pdftex.def Info: DFC.jpg used on input line 259.
 (pdftex.def)             Requested size: 638.20052pt x 237.5622pt.
-File: BoxDiagram.pdf Graphic file (type pdf)
 
-<use BoxDiagram.pdf>
-Package pdftex.def Info: BoxDiagram.pdf used on input line 259.
-(pdftex.def)             Requested size: 478.64226pt x 369.87337pt.
+<4000_90_1_to_4_RvT_graph.pdf, id=18, 505.89pt x 505.89pt>
+File: 4000_90_1_to_4_RvT_graph.pdf Graphic file (type pdf)
 
-Overfull \hbox (6.79999pt too wide) in paragraph at lines 259--259
- [] 
- []
-
-File: BoxDiagram.pdf Graphic file (type pdf)
-<use BoxDiagram.pdf>
-Package pdftex.def Info: BoxDiagram.pdf used on input line 259.
-(pdftex.def)             Requested size: 478.64226pt x 369.87337pt.
+<use 4000_90_1_to_4_RvT_graph.pdf>
+Package pdftex.def Info: 4000_90_1_to_4_RvT_graph.pdf used on input line 259.
+(pdftex.def)             Requested size: 478.64226pt x 478.65523pt.
 
 Overfull \hbox (6.79999pt too wide) in paragraph at lines 259--259
  [] 
  []
 
-LaTeX Font Info:    Font shape `OT1/phv/m/it' in size <20.74> not available
-(Font)              Font shape `OT1/phv/m/sl' tried instead on input line 259.
+<Opt_Gaussian_4000.pdf, id=19, 505.89pt x 505.89pt>
+File: Opt_Gaussian_4000.pdf Graphic file (type pdf)
+
+<use Opt_Gaussian_4000.pdf>
+Package pdftex.def Info: Opt_Gaussian_4000.pdf used on input line 259.
+(pdftex.def)             Requested size: 478.64226pt x 478.65523pt.
+
+Overfull \hbox (6.79999pt too wide) in paragraph at lines 259--259
+ [] 
+ []
+
 File: BoxDiagram.pdf Graphic file (type pdf)
 <use BoxDiagram.pdf>
 Package pdftex.def Info: BoxDiagram.pdf used on input line 259.
@@ -1121,13 +1125,13 @@ Overfull \hbox (6.79999pt too wide) in paragraph at lines 259--259
 {/var/lib/texmf/fonts/map/pdftex/updmap/pdftex.map} <./Motivations.pdf> <./SysD
 iagram.pdf
 
-pdfTeX warning: /usr/bin/pdflatex (file ./SysDiagram.pdf): PDF inclusion: multi
-ple pdfs with page group included in a single page
+pdfTeX warning: pdflatex (file ./SysDiagram.pdf): PDF inclusion: multiple pdfs 
+with page group included in a single page
 > <./BoxDiagram.pdf
 
-pdfTeX warning: /usr/bin/pdflatex (file ./BoxDiagram.pdf): PDF inclusion: multi
-ple pdfs with page group included in a single page
-> <./DFC.jpg>]
+pdfTeX warning: pdflatex (file ./BoxDiagram.pdf): PDF inclusion: multiple pdfs 
+with page group included in a single page
+> <./DFC.jpg> <./4000_90_1_to_4_RvT_graph.pdf> <./Opt_Gaussian_4000.pdf>]
 \tf@nav=\write6
 \openout6 = `Poster.nav'.
 
@@ -1139,18 +1143,12 @@ ple pdfs with page group included in a single page
 
 Package atveryend Info: Empty hook `BeforeClearDocument' on input line 260.
 Package atveryend Info: Empty hook `AfterLastShipout' on input line 260.
- (./Poster.aux)
+
+(./Poster.aux)
 Package atveryend Info: Executing hook `AtVeryEndDocument' on input line 260.
 Package atveryend Info: Executing hook `AtEndAfterFileList' on input line 260.
-
-
-Package rerunfilecheck Warning: File `Poster.out' has changed.
-(rerunfilecheck)                Rerun to get outlines right
-(rerunfilecheck)                or use package `bookmark'.
-
-Package rerunfilecheck Info: Checksums for `Poster.out':
-(rerunfilecheck)             Before: <no file>
-(rerunfilecheck)             After:  D41D8CD98F00B204E9800998ECF8427E;0.
+Package rerunfilecheck Info: File `Poster.out' has not changed.
+(rerunfilecheck)             Checksum: D41D8CD98F00B204E9800998ECF8427E;0.
 Package atveryend Info: Empty hook `AtVeryVeryEnd' on input line 260.
  )
 (\end occurred inside a group at level 1)
@@ -1158,21 +1156,21 @@ Package atveryend Info: Empty hook `AtVeryVeryEnd' on input line 260.
 ### simple group (level 1) entered at line 25 ({)
 ### bottom level 
 Here is how much of TeX's memory you used:
- 18338 strings out of 495031
- 332731 string characters out of 6181530
- 490578 words of memory out of 5000000
- 21078 multiletter control sequences out of 15000+600000
- 36421 words of font info for 83 fonts, out of 8000000 for 9000
+ 18336 strings out of 495031
+ 332696 string characters out of 6181531
+ 489743 words of memory out of 5000000
+ 21069 multiletter control sequences out of 15000+600000
+ 34199 words of font info for 76 fonts, out of 8000000 for 9000
  14 hyphenation exceptions out of 8191
  49i,15n,77p,414b,1642s stack positions out of 5000i,500n,10000p,200000b,80000s
 {/usr/share/texlive/texmf-dist/fonts/enc/dvips/base/8r.enc}</us
 r/share/texlive/texmf-dist/fonts/type1/public/amsfonts/symbols/msam10.pfb></usr
 /share/texlive/texmf-dist/fonts/type1/urw/helvetic/uhvb8a.pfb></usr/share/texli
 ve/texmf-dist/fonts/type1/urw/helvetic/uhvr8a.pfb>
-Output written on Poster.pdf (1 page, 386564 bytes).
+Output written on Poster.pdf (1 page, 396151 bytes).
 PDF statistics:
- 102 PDF objects out of 1000 (max. 8388607)
- 72 compressed objects within 1 object stream
+ 118 PDF objects out of 1000 (max. 8388607)
+ 84 compressed objects within 1 object stream
  3 named destinations out of 1000 (max. 500000)
- 63 words of extra memory for PDF output out of 10000 (max. 10000000)
+ 73 words of extra memory for PDF output out of 10000 (max. 10000000)
 
