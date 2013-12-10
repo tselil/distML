@@ -1,22 +1,25 @@
 # PARAMS ###########################################
 size <- 2000
 masked <- 90
-slices <- c(1,2,4,6,10)
-parts <- c(5,6,7)
+slices <- c(1,2,4,6,8,10)
+parts <- c(2,3,4,5,6,7,8,9)
+test <- c(10)
 II <- length(slices) # Slices range
 JJ <- length(parts) # Trials range
 plot_colors <- c("red","blue","green","purple","black","orange")
 ######################################################
 file <- paste(size,masked,sep="")
-filename <- paste("results/movielens/movielens10M_part1",file,sep="")
-title <- paste("Average RMSE vs. Time for a ",size," x ",size," MC Problem over ",length(parts)," Trials",sep="")
+#filename <- paste("results/movielens/movielens10M_part1",file,sep="")
+title <- paste("Average RMSE vs. Time for Gaussian Matrices over ",length(parts)," Trials",sep="")
 #title2 <- "RMSE vs. Money for a 2000 x 2000 MC Problem"
-outputfile <- paste(file,"RvT_graph.pdf",sep="")
+outputfile <- paste("2000_90_1_to_9_RvT_graph.pdf",sep="")
 
 outputfile2 <- paste(file,"RvD_graph.pdf",sep="")
 
 # filenames[[I]][[J]] is the filename of data for slices[I] on trials[J]
-filenames <- lapply(seq(1,length(slices)), function(i) lapply(seq(1,length(parts)), function(j) paste("results/movielens/movielens10M_part",parts[j],".mm.slices",slices[i],".results.out",sep="")))
+#filenames <- lapply(seq(1,length(slices)), function(i) lapply(seq(1,length(parts)), function(j) paste("results/movielens/movielens10M_part",parts[j],".mm.slices",slices[i],".results.out",sep="")))
+filenames <- lapply(seq(1,length(slices)), function(i) lapply(seq(1,length(parts)), function(j) paste("results/outputfile200090_",parts[j],"_masked.out.slices",slices[i],".results.out",sep="")))
+
 
 pdf(outputfile)
 x <- list()
@@ -48,7 +51,8 @@ for(i in seq(1,II)) {
 	xsd[[i]] <- sqrt(xsd[[i]])
 	ysd[[i]] <- sqrt(ysd[[i]])
 }
-
+print(xav)
+print(yav)
 #png(filename="figure.png",height = 295,width=300,bg="white")
 plot(xav[[1]],yav[[1]],type="o",col=plot_colors[1],xlab="Time",ylab="RMSE")
 
@@ -63,9 +67,21 @@ for(i in seq(1,length(x))) {
 	segments(xav[[i]]-epsilon,yav[[i]]-ysd[[i]],xav[[i]]+epsilon,yav[[i]]-ysd[[i]],lwd=2)
 	segments(xav[[i]]-epsilon,yav[[i]]+ysd[[i]],xav[[i]]+epsilon,yav[[i]]+ysd[[i]],lwd=2)
 }
+
 legendcap = unlist(lapply(seq(1,II), function(i) paste(slices[i]," Slice",sep="")))
-legend(600,.8,legendcap,cex=.8,col=plot_colors,pch=21,lty=1)
+legend(200,.25,legendcap,cex=.8,col=plot_colors,pch=21,lty=1)
 dev.off()
+
+# Second Graph: Optimizer and Test Data
+pdf(outputfile2)
+x <- list()
+y <- list()
+
+
+
+
+
+
 
 #pdf(outputfile2)
 #
