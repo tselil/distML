@@ -18,7 +18,7 @@
 \usepackage[latin1]{inputenc}
 \usepackage{beamerposter}  % e.g. custom size poster
   \title[]{{\veryHuge An Optimization Layer for Distributed Matrix Computations }}
-  \author[]{{\Large Jonah Brown Cohen, Tselil Schramm, and Ben Weitz}}
+  \author[]{{\Large Jonah Brown-Cohen, Tselil Schramm, and Ben Weitz}}
 \date{}
 
   \begin{document}
@@ -42,9 +42,9 @@
 \begin{itemize} {\Large
 \item Trade-offs: accuracy vs. time vs. money
 \item Humans: bad at choosing parameters
-\item Solution: an optimization layer to automatically manage the computations
+\item Solution: an optimization layer to automatically manage computations
 \item Learn from past computations
-\item Meet time, accuracy, or financial budget
+\item Meet time, accuracy, or monetary budget
 }
 \end{itemize}
 \end{column}
@@ -77,8 +77,9 @@
 \vspace{.5cm}
 \begin{columns}[t]
 \begin{column}{0.45\textwidth}
+	\vspace{2cm}
 \begin{itemize}{\Large
-\item User specifies input data, and time, error, and financial budgets
+\item User specifies input data, and time, error, and monetary budgets
 \item Optimizer then interfaces with algorithms implemented on top of a parallel framework
 \item All parameter selection hidden from user
 }
@@ -108,20 +109,18 @@
     \begin{block}{\huge Optimizer Design}
 \vspace{.5cm}
 
-
+{\Large Optimizer stores statistics from prior jobs}
 \begin{itemize}{\Large
 \item Architecture-independent
 \begin{itemize} {\Large
-\item Stores stats from prior jobs on the architecture in question
-\item Parameters chosen based on learned stats
+\item Parameters chosen based on statistics from prior jobs on the same architecture
 }
 \end{itemize}
 \vspace{.5cm}
 
 \item Adaptive
 \begin{itemize} {\Large
-\item Stores stats from prior jobs on instances with similar distribution
-\item Predictions improve as the optimizer learns
+\item Predictions for data from a specific distribution improve as the optimizer learns
 }
 \end{itemize}
 \vspace{.5cm}
@@ -138,8 +137,8 @@
 
 \begin{center}
 \begin{figure}
-\fbox{\includegraphics[width=0.6\textwidth]{BoxDiagram.pdf}}
-\caption[width=0.6\textwidth]{The optimizer looks up learned information in a database, then directs distributed computation framework (in our current implementation, SparkR).}
+\fbox{\includegraphics[width=0.7\textwidth]{BoxDiagram.pdf}}
+\caption[width=0.6\textwidth]{Given budget constraints, the optimizer looks up learned information in a database, then directs distributed computation framework.}
 \end{figure}
 \end{center}
 
@@ -178,25 +177,25 @@
        \begin{block}{\huge Evaluation}
 
 \vspace{1cm}
-{\Large Tested on Synthetic and Real-world Data}
+{\Large Evaluated with both Synthetic and Real-world Data}
 \begin{itemize}{\Large
 \item Gaussian Random Matrices (trained on 4, tested on 1)
 \begin{figure}
 	\begin{subfigure}[b]{.45\textwidth}
 \begin{center}
 		\fbox{\includegraphics[width=\textwidth]{4000_90_1_to_4_RvT_graph.pdf}}
-		\caption{Training Data}
+		\caption{Training Data.}
 \end{center}
 	\end{subfigure}
 \hspace{1cm}
 	\begin{subfigure}[b]{.45\textwidth}
 \begin{center}
 		\fbox{\includegraphics[width=\textwidth]{Opt_Gaussian_4000.pdf}}
-		\caption{Testing Data}
+		\caption{Testing Data.}
 \end{center}
 	\end{subfigure}
 \hfill
-	\caption{Plots of Time and Error taken to factor a 4000 by 4000 matrix drawn from a Gaussian distribution}	
+	\caption{Plots of Time and Error taken to factor a 4000 by 4000 matrix drawn from a Gaussian distribution.}	
 \end{figure}
 
 \item MovieLens 10M Dataset (7 partitions, trained on 6, tested on 1)
@@ -204,18 +203,18 @@
 	\begin{subfigure}[b]{.45\textwidth}
 \begin{center}
 		\fbox{\includegraphics[width=\textwidth]{movielens10M_1_to_4_RvT_graph.pdf}}
-		\caption{Training Data}
+		\caption{Training Data.}
 \end{center}
 	\end{subfigure}
 \hspace{1cm}
 	\begin{subfigure}[b]{.45\textwidth}
 \begin{center}
 		\fbox{\includegraphics[width=\textwidth]{Opt_movielens.pdf}}
-		\caption{Testing Data}
+		\caption{Testing Data. }
 \end{center}
 	\end{subfigure}
 \hfill
-	\caption{Plots of Time and Error taken to factor a 4000 by 4000 matrix drawn from a Gaussian distribution}	
+	\caption{Plots of Time and Error taken to factor a the Movielens 10M Datasetpartitions.}	
 \end{figure}
 \item Optimizer performs as well as manually setting the parameter!}
 \end{itemize}
