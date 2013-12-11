@@ -11,6 +11,7 @@ import csv
 from collections import defaultdict
 import random
 import string
+from math import exp
 
 # Price per slice
 price = 1
@@ -64,7 +65,7 @@ def averageTuples(dataTuples):
 
 # Read the relevant optimizer data
 # we assume row = [ time, #slices, error, iterations, m, n, #revealed]
-def loadData(fileName, time, budget, error, m, n, p):
+def loadData(fileName, time, budget, error, m, n, p, isEst):
 	dataFile = open(fileName,'r')
 	dataReader = csv.reader(dataFile,delimiter='\t',quotechar='|')
 	dataTuples = [] 
@@ -73,7 +74,7 @@ def loadData(fileName, time, budget, error, m, n, p):
 		budgetOK = float(row[1])*float(row[0])*price <= budget
 		errorOK = float(row[2]) <= error
 		sizeOK = isNear(float(row[4]),float(row[5]),float(row[6]),m,n,p)
-		if (timeOK and budgetOK and errorOK and sizeOK):
+		if (timeOK and budgetOK and errorOK and sizeOK) or isEst:
 			dataTuples += [tuple(map(float,row)+[float(row[1])*float(row[0])*price])]
 	dataFile.close()
 	return dataTuples
@@ -115,7 +116,38 @@ def updateData(fileName,tup):
 	dataWriter = csv.writer(dataFile,delimiter='\t',quotechar='|')
 	dataWriter.writerow(list(tup[0:7]))
 	dataFile.close()
-	 
+
+# Write out experimental results for plotting/evaluation
+def writeResults(fileName,tup):
+	resultsFile = open(fileName,'w')
+	resultsWriter = csv.writer(resultsFile,delimiter='\t',quotechar='|')
+	resultsWriter.writerow(["slices","iterations","RMSE","overhead","subproblem time","projection time"])
+	resultsWriter.writerow([tup[1],tup[3],tup[2],0.0,tup[0],0.0])
+
+def genDumbTable(tupList, time, budget, error, m, n, p):
+	newTups = []
+	# Tuple format: (time,slices,rmse,iterations,m,n,p)
+	timePerIterEst = 0
+	errPerSliceEst = 0
+	for tup in tupList:
+		# time*slices/(iter*m*n*p)
+		timePerIterEst += float(tup[0])*tup[1]/(tup[3]*tup[4]*tup[5]*tup[6])
+        # (err - e^(-iter))/slices
+		errPerSliceEst += (float(tup[2])-exp(-tup[3]))/tup[1]
+	timePerIterEst *= m*n*p/len(tupList)
+	errPerSliceEst /= len(tupList)
+	assert (errPerSliceEst > 0)
+	maxIter = float(time)/timePerIterEst
+	for iters in  range(10, maxIter, 10):
+		maxSlices = float(budget)/(price*iters*timePerIterEst)
+		for slices in range(1, maxSlices):
+			estTime = timePerIterEst*iters/slices
+			estErr = errPerSliceEst*slices + exp(-iters)
+			newTups += [(estTime, slices, estErr, iters, m, n, p)]
+	
+	return newTups
+
+
 # Main - Run DFC with chosen params
 NUM_PARAMS = 5
 def main(argv):
@@ -126,13 +158,15 @@ def main(argv):
 	budget = "unset"
 	optParam = ERROR_FLAG
 	explore = False
+	isDumb = False
 	masterURL = "local"
+	resultsFile = ""
 	try:
-		opts, args = getopt.getopt(argv,"hd:m:b:t:e:xu:")
+		opts, args = getopt.getopt(argv,"hd:m:b:t:e:xu:o:p")
 		if ("-b" in argv and "-t" in argv and "-e" in argv):
-			   raise Exception('Too many optimization params')
+			raise Exception('Too many optimization params')
 		if ("-b" not in argv and "-t" not in argv and "-e" not in argv):
-			   raise Exception('Not enough optimization params')
+			raise Exception('Not enough optimization params')
 	except: 
 		print helpMSG
 		sys.exit(2)
@@ -142,6 +176,8 @@ def main(argv):
 			sys.exit()
 		elif opt in ("-d"):
 			dataFile = arg
+		elif opt in ("-p"):
+			isDumb = True
 		elif opt in ("-m"):
 			matrixFile = arg
 		elif opt == "-b":
@@ -154,6 +190,8 @@ def main(argv):
 			explore = True
 		elif opt == "-u":
 			masterURL = arg
+		elif opt == "-o":
+			resultsFile = arg
 
 	# Set size parameters
 	f = open(matrixFile,'r')
@@ -173,8 +211,12 @@ def main(argv):
 		optParam = BUDGET_FLAG
 
 	# Access the data table and choose relevant entries
-	tupList = loadData(dataFile, time, budget, error, m, n, p)
+	tupList = loadData(dataFile, time, budget, error, m, n, p, isDumb)
 	tupList = averageTuples(tupList)
+
+	if isDumb:
+		tupList = genDumbTable(tupList, time, budget, error, m, n, p)
+
 	config = chooseParams(tupList, optParam, explore)
 	
 	# Call DFC
@@ -198,9 +240,11 @@ def main(argv):
 	print subproblemTime
 	print collectTime
 	time = overhead + subproblemTime + collectTime
+
 	# Update the data table
 	outTup = (time,slices,rmse,iterations,m,n,p)
-	updateData(dataFile,outTup)
-	 
+	# updateData(dataFile,outTup)
+	writeResults(resultsFile,outTup)
+
 if __name__=="__main__":
 	main(sys.argv[1:])
