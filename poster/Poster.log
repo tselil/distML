@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.1415926-2.5-1.40.14 (TeX Live 2013/Debian) (format=pdflatex 2013.12.9)  10 DEC 2013 15:52
+This is pdfTeX, Version 3.1415926-2.5-1.40.14 (TeX Live 2013/Debian) (format=pdflatex 2013.12.9)  10 DEC 2013 16:47
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
@@ -1062,11 +1062,11 @@ Package pdftex.def Info: Motivations.pdf used on input line 261.
 LaTeX Font Info:    Font shape `OT1/phv/bx/n' in size <29.86> not available
 (Font)              Font shape `OT1/phv/b/n' tried instead on input line 261.
 
-<SysDiagram.pdf, id=15, 241.40187pt x 399.74341pt>
+<SysDiagram.pdf, id=15, 359.14958pt x 451.26732pt>
 File: SysDiagram.pdf Graphic file (type pdf)
  <use SysDiagram.pdf>
 Package pdftex.def Info: SysDiagram.pdf used on input line 261.
-(pdftex.def)             Requested size: 319.09213pt x 528.44975pt.
+(pdftex.def)             Requested size: 478.65038pt x 601.45186pt.
 
 <BoxDiagram.pdf, id=16, 794.97pt x 614.295pt>
 File: BoxDiagram.pdf Graphic file (type pdf)
@@ -1079,6 +1079,8 @@ File: DFC.jpg Graphic file (type jpg)
  <use DFC.jpg>
 Package pdftex.def Info: DFC.jpg used on input line 261.
 (pdftex.def)             Requested size: 638.20052pt x 237.5622pt.
+LaTeX Font Info:    Font shape `OT1/phv/m/it' in size <20.74> not available
+(Font)              Font shape `OT1/phv/m/sl' tried instead on input line 261.
 
 <4000_90_1_to_4_RvT_graph.pdf, id=18, 505.89pt x 505.89pt>
 File: 4000_90_1_to_4_RvT_graph.pdf Graphic file (type pdf)
@@ -1156,21 +1158,22 @@ Package atveryend Info: Empty hook `AtVeryVeryEnd' on input line 262.
 ### simple group (level 1) entered at line 25 ({)
 ### bottom level 
 Here is how much of TeX's memory you used:
- 18346 strings out of 495031
- 332984 string characters out of 6181531
- 492334 words of memory out of 5000000
- 21077 multiletter control sequences out of 15000+600000
- 34199 words of font info for 76 fonts, out of 8000000 for 9000
+ 18364 strings out of 495031
+ 333368 string characters out of 6181531
+ 493157 words of memory out of 5000000
+ 21094 multiletter control sequences out of 15000+600000
+ 36421 words of font info for 83 fonts, out of 8000000 for 9000
  14 hyphenation exceptions out of 8191
  49i,15n,77p,414b,1642s stack positions out of 5000i,500n,10000p,200000b,80000s
 {/usr/share/texlive/texmf-dist/fonts/enc/dvips/base/8r.enc}</us
-r/share/texlive/texmf-dist/fonts/type1/public/amsfonts/symbols/msam10.pfb></usr
-/share/texlive/texmf-dist/fonts/type1/urw/helvetic/uhvb8a.pfb></usr/share/texli
-ve/texmf-dist/fonts/type1/urw/helvetic/uhvr8a.pfb>
-Output written on Poster.pdf (1 page, 338630 bytes).
+r/share/texlive/texmf-dist/fonts/type1/public/amsfonts/cm/cmsy10.pfb></usr/shar
+e/texlive/texmf-dist/fonts/type1/public/amsfonts/symbols/msam10.pfb></usr/share
+/texlive/texmf-dist/fonts/type1/urw/helvetic/uhvb8a.pfb></usr/share/texlive/tex
+mf-dist/fonts/type1/urw/helvetic/uhvr8a.pfb>
+Output written on Poster.pdf (1 page, 345916 bytes).
 PDF statistics:
- 117 PDF objects out of 1000 (max. 8388607)
- 85 compressed objects within 1 object stream
+ 121 PDF objects out of 1000 (max. 8388607)
+ 88 compressed objects within 1 object stream
  3 named destinations out of 1000 (max. 500000)
  83 words of extra memory for PDF output out of 10000 (max. 10000000)
 

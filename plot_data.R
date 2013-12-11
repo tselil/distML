@@ -2,25 +2,25 @@
 size <- 4000
 masked <- 90
 slices <- c(1,2,4,6,8)
-parts <- c(1,2,3,4,6,7)
+parts <- c(1,2,3,4)
 test <- c(10)
 II <- length(slices) # Slices range
 JJ <- length(parts) # Trials range
 plot_colors <- c("red","blue","green","purple","dark blue","black")
 margins <- c(6,6,6,6)
 
-#xlims <- c(0,700)
-#ylims <- c(.06,.1)
-#legendloc <- c(400,.1)
+xlims <- c(0,700)
+ylims <- c(.06,.1)
+legendloc <- c(400,.1)
 
-xlims <- c(0,800)
-ylims <- c(.4,1)
-legendloc <- c(400,1)
+#xlims <- c(0,800)
+#ylims <- c(.4,1)
+#legendloc <- c(400,1)
 
 ######################################################
 file <- paste(size,masked,sep="")
 #filename <- paste("results/movielens/movielens10M_part1",file,sep="")
-title <- paste("Trained on Average RMSE vs. Time  over ",length(parts)," Trials:\nGaussian Random Matrices",sep="")
+title <- paste("Trained on Average RMSE vs. Time over ",length(parts)," Trials:\nMovielens10M Data",sep="")
 #title2 <- "RMSE vs. Money for a 2000 x 2000 MC Problem"
 outputfile <- paste("poster/4000_90_1_to_5_RvT_graph.pdf",sep="")
 
@@ -28,11 +28,11 @@ outputfile2 <- paste(file,"RvD_graph.pdf",sep="")
 
 # filenames[[I]][[J]] is the filename of data for slices[I] on trials[J]
 
-#filenames <- lapply(seq(1,length(slices)), function(i) lapply(seq(1,length(parts)), function(j) paste("results/gaussian/4k/outputfile400090_",parts[j],"_masked.out.slices",slices[i],".results.out",sep="")))
-#outputfile <- paste("poster/4000_90_1_to_4_RvT_graph.pdf",sep="")
+filenames <- lapply(seq(1,length(slices)), function(i) lapply(seq(1,length(parts)), function(j) paste("results/gaussian/4k/outputfile400090_",parts[j],"_masked.out.slices",slices[i],".results.out",sep="")))
+outputfile <- paste("poster/4000_90_1_to_4_RvT_graph.pdf",sep="")
 
-filenames <- lapply(seq(1,length(slices)), function(i) lapply(seq(1,length(parts)), function(j) paste("results/movielens/movielens10M_part",parts[j],".mm.slices",slices[i],".results.out",sep="")))
-outputfile <- paste("poster/movielens10M_1_to_4_RvT_graph.pdf",sep="")
+#filenames <- lapply(seq(1,length(slices)), function(i) lapply(seq(1,length(parts)), function(j) paste("results/movielens/movielens10M_part",parts[j],".mm.slices",slices[i],".results.out",sep="")))
+#outputfile <- paste("poster/movielens10M_1_to_4_RvT_graph.pdf",sep="")
 
 pdf(outputfile)
 x <- list()
@@ -96,17 +96,17 @@ dev.off()
 ########################################################################################
 # Second Graph: Optimizer and Test Data
 
-#opt_title <- "Fixed-parameter and Optimized Time vs. Error:\nGaussian Random Matrices"
-#opt_output <- "poster/Opt_Gaussian_4000.pdf"
-#filenames_to_plot <- lapply(seq(1,length(slices)), function(i) paste("results/gaussian/4k/outputfile400090_5_masked.out.slices",slices[i],".results.out",sep=""))
-#opt_pts <- c(100,125,150,175,200,250,300,400,700)
-#opt_filenames <- lapply(seq(1,length(opt_pts)), function(i) paste("optResults/4k_no5_",opt_pts[i],".results",sep=""))
-
-opt_title <- "Fixed-parameter and Optimized Time vs. Error:\nMovielens10M Data"
-opt_output <- "poster/Opt_movielens.pdf"
-filenames_to_plot <- lapply(seq(1,length(slices)), function(i) paste("results/movielens/movielens10M_part5.mm.slices",slices[i],".results.out",sep=""))
+opt_title <- "Fixed-parameter and Optimized Time vs. Error:\nGaussian Random Matrices"
+opt_output <- "poster/Opt_Gaussian_4000.pdf"
+filenames_to_plot <- lapply(seq(1,length(slices)), function(i) paste("results/gaussian/4k/outputfile400090_5_masked.out.slices",slices[i],".results.out",sep=""))
 opt_pts <- c(100,125,150,175,200,250,300,400,700)
-opt_filenames <- lapply(seq(1,length(opt_pts)), function(i) paste("optResults/movie_no5_",opt_pts[i],".results",sep=""))
+opt_filenames <- lapply(seq(1,length(opt_pts)), function(i) paste("optResults/4k_no5_",opt_pts[i],".results",sep=""))
+
+#opt_title <- "Fixed-parameter and Optimized Time vs. Error:\nMovielens10M Data"
+#opt_output <- "poster/Opt_movielens.pdf"
+#filenames_to_plot <- lapply(seq(1,length(slices)), function(i) paste("results/movielens/movielens10M_part5.mm.slices",slices[i],".results.out",sep=""))
+#opt_pts <- c(100,125,150,175,200,250,300,400,700)
+#opt_filenames <- lapply(seq(1,length(opt_pts)), function(i) paste("optResults/movie_no5_",opt_pts[i],".results",sep=""))
 
 
 pdf(opt_output)
@@ -128,12 +128,11 @@ opt_points <- do.call(rbind,opt)
 x_opt <- opt_points[,1]
 y_opt <- opt_points[,2]
 par(bg = "white",mar=margins)
-plot(x[[1]],y[[1]],type="o",col=plot_colors[1],xlab="Time",ylab="RMSE",xlim=xlims,ylim=ylims,cex.lab=2)
+plot(x_opt,y_opt,type="o",col="black",lwd=3,xlab="Time",ylab="RMSE",xlim=xlims,ylim=ylims,cex.lab=2)
 
 for(i in seq(1,length(x))) {
 	lines(x[[i]],y[[i]],type="o",col=plot_colors[i])
 }
-lines(x_opt,y_opt,type="o",col="black",lwd=2)
 legend(legendloc[1],legendloc[2],c("1 Slice","2 Slices","4 Slices","6 Slices","8 Slices","Optimizer"),col=plot_colors,pch=21,lty=1,lwd=c(1,1,1,1,1,2),cex=1.7)
 title(opt_title,cex.main=1.7)
 dev.off()

@@ -76,7 +76,7 @@
 \vspace{1.2cm}
 
     \begin{block}{\huge Framework}
-\vspace{.5cm}
+\vspace{.1cm}
 \begin{columns}[t]
 \begin{column}{0.4\textwidth}
 \begin{itemize}
@@ -85,7 +85,7 @@
 \item All parameter selection hidden from user
 \end{itemize}    
 \end{column}
-\begin{column}{.4\textwidth}
+\begin{column}{.6\textwidth}
 \begin{center}
 \begin{figure}
 \fbox{\includegraphics[width=0.75\textwidth]
@@ -160,7 +160,7 @@ Our optimizer is:
 \vspace{.2cm}
 \begin{figure}
 \fbox{\includegraphics[width=0.6\textwidth]{DFC.jpg}}
-\caption[width=0.6\textwidth]{DFC is a distributed matrix factorization algorithm.}
+\caption[width=0.6\textwidth]{DFC is a distributed matrix factorization algorithm. Image taken from http://www.cs.berkeley.edu/$\sim$ameet/dfc/}
 \end{figure}
 \vspace{.2cm}
 \item The parallel computation framework: SparkR
@@ -208,7 +208,7 @@ Our optimizer is:
 \end{figure}
 \end{itemize}
 
-\item MovieLens 10M Dataset
+\item MovieLens 10M Dataset (http://grouplens.org/datasets/movielens/)
 \begin{itemize} {\large
 \item Partitioned dataset into 7 parts
 \item Trained on all but one partition and tested on the remainder}
@@ -227,7 +227,7 @@ Our optimizer is:
 \end{center}
 	\end{subfigure}
 \hfill
-	\caption{Plots of Time and Error taken to factor a 4000 by 4000 matrix drawn from a Gaussian distribution}	
+	\caption{Plots of Time and Error taken to factor a partition of the Movielens10M dataset}	
 \end{figure}
 \end{itemize}
 \item Optimizer performs as well as manually setting the parameter!
