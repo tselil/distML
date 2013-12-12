@@ -53,4 +53,7 @@ Given factorizations $(U_i,V_i)$ of each column slice $M_i$, the Column Projecti
 Column Projection is very fast as it simply requires $k$ matrix projections. It does however rely on the assumption that the columns of $U_1$ span the column space of the full low-rank factorization of $M$. In situations where the size $n/k$ of a column slice is large relative to the rank of the factorization, this assumption is somewhat reasonable. However, there is still the risk that this projection method results in a small loss in accuracy due to the assumption.
 
 \subsubsection{Randomized Projection}
-Randomized Projection
+The Randomized Projection algorithm we use was introduced by Halko et. al. in \cite{Halko}. The algorithm is inspired by the Johnson-Lindenstrauss randomized method for metric embeddings. The algorithm involves sampling a random Guassian matrix and computing several QR factorizations. As a result, the algorithm is slower than the Column Projection algorithm. However, it has better theoretical guarantees on accuracy.
+
+\subsubsection{Projection Algorithm Choice: Randomized Projection}
+Despite the aforementioned tradeoffs in speed versus accuracy, we chose to use only the Randomized Projection algorithm. The reason for this was that it gave consistently better error than Column Projection, but the difference in runtime was very minimal. Further, the time take by the projection step in DFC is completely dominated by the time taken for the actual matrix factorizations. As a result, accuracy at this step is more important than slight differences in run time. [INSERT DATA HERE SUPPORTING THE ABOVE CLAIM]
