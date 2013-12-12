@@ -1,9 +1,54 @@
 % !TeX root = 
 
-The optimizer was designed with the 
-\subsection{Optimizer Context}
+When designing the optimizer, our goals were to provide a simple 
+interface to the user and ensure architecture-independence. To meet
+the objective of architecture-independence, the optimizer needs to gather
+data about jobs run in its specific architecture context.  
+
+\subsection{Optimizer System Context}
+
+
 \subsubsection{Interface to User}
-\subsubsection{Interface to User}
+The user's interface with the optimizer is simple: the user needs to
+provide a problem instance for the job, constraints on the amount of
+time and money that the job can spend and on the amount of error
+that is acceptable for the output. 
+
+The user can also specify whether to run the optimizer in {\em explore 
+mode}, a mode suitable for high-variance data applications or if the 
+optimizer is in the initial stages of learning a new 
+distribution (see Section \ref{sec:explore}). 
+
+Also, the user specifies which distribution the data comes from (by
+distribution, we simply mean the source of the data, since data from
+different sources may behave differently). Currently,
+this is accomplished by having the user point the optimizer to the 
+source of the learned data. When using the optimizer for the first 
+couple of times, the user can input statistics from training on similarly
+distributed data. There is also a more cursory mode available, in which
+the optimizer runs a subproblem and obtains estimates for a wider 
+variety of parameter settings (see Section \ref{sec:nodata}). In this 
+mode, the user need not specify the distribution of the data. 
+
+\subsubsection{Interface with Algorithm and Infrastructure}
+Our optimizer relies on access to an already implemented distributed 
+algorithm. The optimizer outputs the parameters that the algorithm 
+should run with; in the current implementation this is limited to 
+the number of processors and the number of iterations, although this
+can be easily extended to algorithm-specific parameters (i.e. learning
+rate). 
+The algorithm itself is expected to communicate with the distributed
+computation framework, although this too could be altered if necessary.
+
+After the algorithm returns, the optimizer requires information about
+the outcome of the job so that it can learn. We want to learn the error
+and runtime as a function of the number of iterations and the number
+of processors used. Because the input parameters are determined by the
+optimizer (and thus already known to it), all the optimizer requires 
+from the algorithm's output is the error and the runtime. In principle,
+if there is an additional parameter over which one wishes to optimize
+(say, for example, testing error in addition to training error),
+additional information about the algorithm output must be stored. 
 
 \subsection{Learning}
 
@@ -13,11 +58,13 @@ about already completed jobs. For instances that come from the same distribution
 
 \subsection{Choosing Parameters}
 
+\subsubsection{Choosing Parameters using Learned Data}
 When given a problem instance with a particular budget, our optimizer
 consults data from prior runs in order to select the algorithm 
 parameters. 
 
 \subsubsection{Choosing Parameters in the Absence of Data}
+\label{sec:nodata}
 
 Thus far, our described methods of parameter selection rely on a database
 of information about previously completed jobs. However, when instances
@@ -53,6 +100,8 @@ cursory runs to these models, and then use these estimates to choose
 the appropriate number of iterations and number of processors within the
 budget. In practice, initially our estimates are quite poor (see TODO).
 
+\subsubsection{Explore Mode}
+\label{sec:explore}
 In order to prevent the optimizer from returning again and again to
 suboptimal parameter settings simply because they are known, we have 
 included an {\em explore mode}. In {\em explore mode}, randomization is
