@@ -1,9 +1,13 @@
 % !TeX root = 
 
 When designing the optimizer, our goals were to provide a simple 
-interface to the user and ensure architecture-independence. To meet
+interface to the user and ensure architecture-independence. To meet the
+objective of a simple user interface, the optimizer must be able to
+make parameter choices based only on user-specified time, accuracy, and
+monetary budget constraints. To meet
 the objective of architecture-independence, the optimizer needs to gather
-data about jobs run in its specific architecture context.  
+data about jobs run in its specific architecture context. Below,
+we describe the design of the optimizer in pursuit of these goals. 
 
 \subsection{Optimizer System Context}
 
@@ -12,7 +16,9 @@ data about jobs run in its specific architecture context.
 The user's interface with the optimizer is simple: the user needs to
 provide a problem instance for the job, constraints on the amount of
 time and money that the job can spend and on the amount of error
-that is acceptable for the output. 
+that is acceptable for the output. The user also specifies $X$, the 
+parameter to be optimized (currently, $X$ can be total runtime, total
+error, or amount of money spent).
 
 The user can also specify whether to run the optimizer in {\em explore 
 mode}, a mode suitable for high-variance data applications or if the 
@@ -97,17 +103,42 @@ serial time is negligible compared to the parallel time.
 
 What we do in this case is try to fit the extant data from the small
 cursory runs to these models, and then use these estimates to choose
-the appropriate number of iterations and number of processors within the
-budget. In practice, initially our estimates are quite poor (see TODO).
+the number of iterations and number of processors that optimize $X$ 
+within the user's budget. In practice, our initial estimates are 
+quite poor (see TODO). 
+
+However, what matters is that the estimates of $X$ for different 
+parameter settings are relatively accurate; that is, if the true value 
+of $X$ will be better with parameter settings $p_1$ than with parameter
+settings $p_2$, then the estimated one should be better as well.
 
 \subsubsection{Explore Mode}
 \label{sec:explore}
+If the optimizer has access to few previous job outcomes, or if the data
+comes from a very high-variance distribution, there is a risk that 
+suboptimal parameter settings will be chosen again and again, simply 
+because there was one very successful run with those settings, or because
+the optimal settings are not known and the optimizer's estimated values
+of $X$ are too high for other settings.
+
 In order to prevent the optimizer from returning again and again to
-suboptimal parameter settings simply because they are known, we have 
-included an {\em explore mode}. In {\em explore mode}, randomization is
-used to avoid local optima in parameter selection. For example, given two
-parameter settings $p_1$ and $p_2$, with values $v_1$  and $v_2$ for the
-quantity being optimized, then $p_1$ is $\frac{v_1}{v_2}$ as likely to
-be chosen as $p_2$. 
+these local optima, the optimizer is able to run in {\em explore mode}. 
+In {\em explore mode}, randomization is
+used to avoid local optima in parameter selection. Say that we have 
+parameter settings $p_1, \ldots, p_m$ with estimated optimized values 
+$x_1, \ldots, x_m$. Then the optimizer chooses the output parameters $P$ 
+to be $p_i$ with probability
+\[
+\Pr[P = p_i] = \frac{\frac{1}{x_i}}{\sum_{j = 1}^m \frac{1}{x_j}}.
+\]
+This scheme has the property that if $\frac{x_i}{x_j} = \alpha$, 
+then $\frac{\Pr[P = p_i]}{\Pr[P = p_j]} = \frac{1}{\alpha}$--that is, a 
+particular parameter setting is chosen with probability proportional 
+to its relative minimization of $X$.
+
+In this way, the randomness guarantees that the optimizer explores the 
+parameter space. Thus as the number of jobs encountered grows, 
+the optimizer's data about the entire parameter space improves, and the
+influence of outliers on parameter choice is subdued. 
 
 
