@@ -56,10 +56,16 @@ if there is an additional parameter over which one wishes to optimize
 (say, for example, testing error in addition to training error),
 additional information about the algorithm output must be stored. 
 
-\subsection{Learning}
+\subsection{Larnin'}
 
-In order to provide more accurate choices, our optimizer stores information
-about already completed jobs. For instances that come from the same distribution, we store the parameters with which the 
+Our optimizer's parameter selection strategy is based on statistical 
+data from prior runs. 
+To ensure that the optimizer's choices are architecture-independent,
+and to allow the optimizer to adapt to data from different distributions 
+and to continually improve its predictions, our optimizer learns from
+every job that it encounters. 
+
+
 
 
 \subsection{Choosing Parameters}
