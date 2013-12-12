@@ -1,3 +1,14 @@
-For testing and evaluation of our optimizer we implemented several variants of the DFC (Divide-Factor-Combine) framework for distributed matrix completion, originally introduced in \cite{Ameet}. The DFC framework is used to solve the following well-studied matrix completion problem: Let $A$ be an unknown $m\times n$ matrix of rank $r$, and assume $r<<m,n$. Next $A'$ is obtained by adding a small amount of noise to every entry of $A$. Finally, a small fraction (e.g. $10\%$) of the entries of $A'$ are revealed. The goal is then to find a low-rank matrix $B$ that is a good approximation of the original matrix $A$, using only the revealed entries of $A'$.
+For testing and evaluation of our optimizer we implemented several variants of the DFC (Divide-Factor-Combine) framework for distributed matrix completion, originally introduced in \cite{Ameet}.
 
-A version of this problem is actually solved in practice by online movie-recommendation systems. Here the matrix has rows corresponding to users and columns corresponding to movies.
+\subsection{Noisy Matrix Completion}
+\subsubsection{Problem Definition}
+The DFC framework is used to solve the following well-studied noisy matrix completion problem: Let $A$ be an unknown $m\times n$ matrix of rank $r$, and assume $r<<m,n$. Next $A'$ is obtained by adding a small amount of noise to every entry of $A$. Finally, a small fraction (e.g. $10\%$) of the entries of $A'$ are revealed. The goal is then to find a low-rank matrix $B$ that is a good approximation of the original matrix $A$, using only the revealed entries of $A'$. The standard method of finding such a low rank matrix $B$ is to find a low-rank factorization $B=UV^T$ that agrees with $A'$ on all the revealed entries.
+
+A version of this problem is actually solved in practice by online movie-recommendation systems. Here the matrix has rows corresponding to users and columns corresponding to movies. The assumption that the matrix is low rank corresponds to the assumption that users movie preferences are only based on a relatively small number of factors (e.g. movie genre, movie length, user age etc).
+\subsubsection{DFC Overview}
+The DFC framework for noisy matrix completion consists of three steps:
+\begin{itemize}
+\item \textbf{Divide} the input matrix $A$ column-wise into $k$ pieces $\{A_1,A_2,...A_k\}$. More specifically, $A_i$ consists of $n/k$ columns from $A$ and concatenating all the $A_i$ gives the original matrix $A$.
+\item \textbf{Factor} each matrix $A_i$ as $U_i V_i^T$ ton a separate processor using some base matrix factorization algorithm.
+\item \textbf{Combine} the factorizations $U_iV_i^T$ into one large factorization $UV^T$ using some matrix column projection algorithm.
+\end{itemize}
