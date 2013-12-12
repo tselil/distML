@@ -9,6 +9,8 @@ the objective of architecture-independence, the optimizer needs to gather
 data about jobs run in its specific architecture context. Below,
 we describe the design of the optimizer in pursuit of these goals. 
 
+%------------------------------------------------
+
 \subsection{Optimizer System Context}
 
 
@@ -23,9 +25,16 @@ error, or amount of money spent).
 The user can also specify whether to run the optimizer in {\em explore 
 mode}, a mode suitable for high-variance data applications or if the 
 optimizer is in the initial stages of learning a new 
-distribution (see Section \ref{sec:explore}). 
+distribution (see Section \ref{sec:explore}). The user can also specify
+whether to run the optimizer in {\em estimation mode}, a mode in which
+the optimizer augments its data with estimates of runtime and error 
+using previous jobs from a different parameter 
+subspace (see Section \ref{sec:estimate}). This is for example useful 
+if the optimizer has learned many examples of
+smaller or larger problem instances, but has relatively sparse data
+for instances of a given jobs' size. 
 
-Also, the user specifies which distribution the data comes from (by
+The user also specifies which distribution the data comes from (by
 distribution, we simply mean the source of the data, since data from
 different sources may behave differently). Currently,
 this is accomplished by having the user point the optimizer to the 
@@ -56,6 +65,8 @@ if there is an additional parameter over which one wishes to optimize
 (say, for example, testing error in addition to training error),
 additional information about the algorithm output must be stored. 
 
+%------------------------------------------------
+
 \subsection{Learning}
 
 Our optimizer's parameter selection strategy is based on statistical 
@@ -79,13 +90,37 @@ previous job runs, or if the user perefers to populate the database
 with some systematic parameter setting tests, the optimizer can learn
 from these as well. 
 
+%------------------------------------------------
 
 \subsection{Choosing Parameters}
 
 \subsubsection{Choosing Parameters using Learned Data}
 When given a problem instance with a particular budget, our optimizer
 consults data from prior runs in order to select the algorithm 
-parameters. 
+parameters.
+
+What our optimizer does is it scans over all job instances
+from the same distribution. If {\em estimation mode} is enabled, 
+the optimizer
+considers all previous similarly distributed jobs regardless of size, 
+making estimates of error and runtime expected for an instance 
+of the current size. If estimation mode is not enabled, then the optimizer
+discards information about all previous jobs which are not within a
+factor of 2 of its size--here, size is determined not by the dimensions
+of the matrix but rather by the number of entries. The factor of 2 was 
+chosen using non-rigorous empirical trials--it may be that this is not
+an appropriate choice for all datasets, but in principle it is easy to
+learn this parameter as well, and this is one direction for future work.  
+
+After collecting the relevant prior jobs, 
+the optimizer takes an average over values of
+time, error and money for identical parameter settings, 
+and then chooses the settings that minimize the average value of $X$ while
+still meeting the budget constraints. Though we use a straightforward
+average here, it may make sense to include the option of taking an
+exponentially weighted moving average. In the interest of keeping the
+interface simple, we did not implement this, though in principle this too 
+could be added with very little additional effort. 
 
 \subsubsection{Choosing Parameters in the Absence of Data}
 \label{sec:nodata}
@@ -95,40 +130,87 @@ of information about previously completed jobs. However, when instances
 from a new data distribution are initially run, there is no past data upon
 which we can draw.
 
-For this setting, we do the following: first, we run such a job for some
-small number of iterations, in order to get some cursory data (this can
-easily be modified as appropriate; we can run several small jobs, as the 
-time budget allows). Then, we use this data to create estimates of the 
-error, time to completion, and expenditure as a function of number of 
-iterations and number of processors used.
+For this setting, we do the following: first, we populate our database 
+with several smaller jobs--this is currently achieved by running the 
+algorithm with a couple of parameter settings for very few iterations. 
+This strategy can easily be modified as appropriate--for example, if
+minimizing error with a large time budget, and a small monetary budget, 
+it may make sense even in this population step 
+to have larger numbers of iterations, but fewer processors, or for some
+algorithms it may make sense to run the optimizer on a well-chosen 
+submatrix. Exploring the best strategy for rapidly populating the database
+is an interesting direction for future work.
 
-From our empirical observations, the error is an exponential function of
+This gives us some very rough, cursory data at relatively 
+little cost. We then run the optimizer on the job using this initial data
+in {\em estimation mode} and {\em explore mode}.
+
+\subsubsection{Estimation Mode}
+\label{sec:estimate}
+Under some circumstances, it is natural that only a limited subspace
+of parameter settings has been explored. It is natural to try to extend
+what we know about that subspace to gain information about other parameter
+choices. For example, if we see only
+relatively small matrices from a given distribution, we may want to use
+our data to select parameters for a larger one; or, if we have been
+operating with a tiny monetary budget and suddenly are able to afford
+more processors, we may want to use our data for 1 and 2 processor
+jobs to choose parameters when more parallelism is available. 
+
+{\em Estimation mode} tells the optimizer to create estimates of error, time to completion, and expenditure as a function of number of 
+iterations, number of processors used, and the size of the instance. The 
+optimizer can then use these estimates as synthetic data to populate
+unknown areas of the parameter space, and thus make better parameter
+choices when data is unavailable. 
+
+The way we've chosen to do estimation is to try to fit data from
+prior jobs to models for $time$ and $error$ as functions of iterations, 
+number of processors, and instance size. 
+
+
+{\em Error estimation:} From our empirical observations, the error is an exponential function of
 the number of iterations, with an additive term which depends on the number
 of processors:
 \[
 err(s,t) = A\cdot s + e^{-B\cdot t}.
 \]
 where $s$ is the number of processors and $t$ is the number of iterations, 
-and $A$ and $B$ are unknown constants. The time to completion, at least 
+and $A$ and $B$ are unknown constants. As far as we have been abe to 
+discern, the error is not a function of instance size; however, this
+may be because of the particular algorithm we chose for our tests. In 
+any case, this should vary from algorithm to algorithm.
+
+{\em Runtime estimation:} The time to completion, at least 
 in this method, we have observed to be a polynomial function of the 
 number of processors:
 \[
-time(s,t) = \frac{t}{s^{C}}.
+time(s,t,n) = \frac{t\cdot n}{s^{C}}. % TODO CHECK THIS!!!!
 \]
-where again $s$ is the number of processors, $t$ is the number of iterations, and $C$ is some unknown constant. This is essentially an application of 
-Ahmdahl's Law, but for the application we chose to test on (DFC) the
-serial time is negligible compared to the parallel time.
+where again $s$ is the number of processors, $t$ is the number of 
+iterations, $n$ is the number of revealed entries in the matrix, 
+and $C$ is some unknown constant. This is essentially an application of 
+Ahmdahl's Law, but for the algorithm we chose to test on (DFC) the
+serial time is negligible compared to the parallel time. The model
+for the time dependence should also vary with the specific algorithm
+in question. 
 
-What we do in this case is try to fit the extant data from the small
-cursory runs to these models, and then use these estimates to choose
-the number of iterations and number of processors that optimize $X$ 
-within the user's budget. In practice, our initial estimates are 
-quite poor (see TODO). 
+The way that the optimizer now works is it fits the extant data to
+these models, and then estimates the range of parameters which meet the
+budgets, and then populates the database with synthetic data 
+over the relevant range. Then, the optimizer performs its usual
+parameter selection process, choosing the  number of iterations 
+and number of processors that optimize $X$ according to these estimates. 
+In practice, the quality of our estimates is very dependent on the 
+quality and quantity of data we already have 
+(see ?). % TODO: get this data here
 
 However, what matters is that the estimates of $X$ for different 
 parameter settings are relatively accurate; that is, if the true value 
 of $X$ will be better with parameter settings $p_1$ than with parameter
-settings $p_2$, then the estimated one should be better as well.
+settings $p_2$, then the estimated one should be better as well. Then, 
+if the optimizer is simultaneosly run in {\em explore mode}, the quality
+of predictions increases as the optimizer encounters more 
+instances (see ?). % TODO: get this data here 
 
 \subsubsection{Explore Mode}
 \label{sec:explore}
@@ -149,8 +231,11 @@ to be $p_i$ with probability
 \[
 \Pr[P = p_i] = \frac{\frac{1}{x_i}}{\sum_{j = 1}^m \frac{1}{x_j}}.
 \]
-This scheme has the property that if $\frac{x_i}{x_j} = \alpha$, 
-then $\frac{\Pr[P = p_i]}{\Pr[P = p_j]} = \frac{1}{\alpha}$--that is, a 
+This scheme has the property that 
+\[
+\frac{x_i}{x_j} = \alpha\qquad \implies \qquad \frac{\Pr[P = p_i]}{\Pr[P = p_j]} = \frac{1}{\alpha},
+\]
+That is, a 
 particular parameter setting is chosen with probability proportional 
 to its relative minimization of $X$.
 
