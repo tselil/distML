@@ -56,7 +56,7 @@ if there is an additional parameter over which one wishes to optimize
 (say, for example, testing error in addition to training error),
 additional information about the algorithm output must be stored. 
 
-\subsection{Larnin'}
+\subsection{Learning}
 
 Our optimizer's parameter selection strategy is based on statistical 
 data from prior runs. 
@@ -65,7 +65,19 @@ and to allow the optimizer to adapt to data from different distributions
 and to continually improve its predictions, our optimizer learns from
 every job that it encounters. 
 
+This amounts to recording each job's distribution (the actual probability
+distribution from which the data comes does not have to be specified--this
+is simply a tag, such as ``movielens data'', since we expect different 
+kinds of input to have different rates of convergence, etc.), runtime,
+error, and the algorithm parameters with which it was run. If there is
+another value which one wishes to optimize over, such as training vs. 
+testing error, this is information which should be stored as well. 
 
+Additionally, it is possible to seed the optimizer with some manually
+constructed training data. If the user already has information about 
+previous job runs, or if the user perefers to populate the database
+with some systematic parameter setting tests, the optimizer can learn
+from these as well. 
 
 
 \subsection{Choosing Parameters}
