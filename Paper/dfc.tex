@@ -2,15 +2,15 @@ For testing and evaluation of our optimizer we implemented several variants of t
 
 \subsection{DFC Framework Overview}
 \subsubsection{Problem Definition}
-The DFC framework is used to solve the following well-studied noisy matrix completion problem: Let $A$ be an unknown $m\times n$ matrix of rank $r$, and assume $r<<m,n$. Next $A'$ is obtained by adding a small amount of noise to every entry of $A$. Finally, a small fraction (e.g. $10\%$) of the entries of $A'$ are revealed. The goal is then to find a low-rank matrix $B$ that is a good approximation of the original matrix $A$, using only the revealed entries of $A'$. The standard method of finding such a low rank matrix $B$ is to find a low-rank factorization $B=UV^T$ that agrees with $A'$ on all the revealed entries.
+The DFC framework is used to solve the following well-studied noisy matrix completion problem: Let $A$ be an unknown $m\times n$ matrix of rank $r$, and assume $r<<m,n$. Next $A'$ is obtained by adding a small amount of noise to every entry of $A$. Finally, let $M$ be the matrix obtained by sampling a small fraction (e.g $10\%$) of the entries of $A'$, and setting all other entries to zero. We refer to $M$ as the matrix of revealed entries. The goal is then to find a low-rank matrix $B$ that is a good approximation of the original matrix $A$, using only the matrix $M$. The standard method of finding such a low rank matrix $B$ is to find a low-rank factorization $B=UV^T$ that agrees with $M$ on all of its non-zero entries.
 
-A version of this problem is actually solved in practice by online movie-recommendation systems. Here the matrix has rows corresponding to users and columns corresponding to movies. The assumption that the matrix is low rank corresponds to the assumption that users movie preferences are only based on a relatively small number of factors (e.g. movie genre, movie length, user age etc).
+A version of this problem is actually solved in practice by online movie-recommendation systems. Here the matrix has rows corresponding to users and columns corresponding to movies. The assumption that the matrix is low rank corresponds to the assumption that users movie preferences are only based on a relatively small number of factors (e.g. movie genre, movie length, user age etc). The matrix $M$ of revealed entries corresponds to the set of actual movie ratings that users have submitted.
 
 \subsubsection{The DFC Algorithm}
 The DFC framework for noisy matrix completion consists of three steps:
 \begin{itemize}
-\item \textbf{Divide} the input matrix $A$ column-wise into $k$ pieces $\{A_1,A_2,...A_k\}$. More specifically, $A_i$ consists of $n/k$ columns from $A$ and concatenating all the $A_i$ gives the original matrix $A$.
-\item \textbf{Factor} each matrix $A_i$ as $U_i V_i^T$ ton a separate processor using some base matrix factorization algorithm.
+\item \textbf{Divide} the input matrix $M$ column-wise into $k$ slices $\{M_1,M_2,...M_k\}$. More specifically, $M_i$ consists of $n/k$ columns from $M$ and concatenating all the $M_i$ gives the original matrix $M$.
+\item \textbf{Factor} each matrix $M_i$ as $U_i V_i^T$ on a separate processor using some base matrix factorization algorithm.
 \item \textbf{Combine} the factorizations $U_iV_i^T$ into one large factorization $UV^T$ using some matrix column projection algorithm.
 \end{itemize}
 From this description it is clear that there are several significant choices to be made in the implementation of this framework. First, both the base factorization algorithm and the projection algorithm for the combine step must be chosen. Second, the parameter $k$ for determining the number of slices to cut the matrix into has an impact both on runtime and accuracy of the result.
@@ -18,28 +18,39 @@ From this description it is clear that there are several significant choices to 
 \subsection{Base Factorization Algorithm Choices}
 We implemented two base matrix factorization algorithms: Stochastic Gradient Descent (SGD) and Accelerated Proximal Gradient Descent (APG). Both algorithms seek to minimize some objective function which is a combination of the error of the approximation and the rank of the factorization.
 \subsubsection{Stochastic Gradient Descent}
-Let $S$ be the set of indices for the revealed entries of the noisy matrix $A'$. The objective function for the Stochastic Gradient Descent algorithm is given by:
+Let $S$ be the set of indices for the revealed entries (i.e. non-zero entries) of the input matrix $M$. The objective function for the Stochastic Gradient Descent algorithm is given by:
 \[
-F(U,V,A') = \sum_{(i,j)\in S} \left(A'_{ij} - (UV^T)_{ij}\right)^2 + \mu (\| U\|^2_F  + \| V\|^2_F)
+F(U,V,M) = \sum_{(i,j)\in S} \left(M_{ij} - (UV^T)_{ij}\right)^2 + \mu (\| U\|^2_F  + \| V\|^2_F)
 \]
-where $\|U\|_F$ denotes the Frobenius norm of $U$ and $\mu$ is a parameter. Intuitively, the first term in the objective function penalizes errors in matching the revealed entries of $A'$ and the second term is a regularization term to prevent over-fitting. The SGD algorithm uses standard gradient descent techniques to compute $\mbox{argmin}_{U,V} F(U,V,A')$. 
+where $\|U\|_F$ denotes the Frobenius norm of $U$ and $\mu$ is a parameter. Intuitively, the first term in the objective function penalizes errors in matching the revealed entries of $M$ and the second term is a regularization term to prevent over-fitting. The SGD algorithm uses standard gradient descent techniques to compute $\mbox{argmin}_{U,V} F(U,V,M)$. 
 
-There are two important issues to note about the SGD algorithm. Firstly, the above minimization requires fixed choices for the dimensions of both $U$ and $V$. In particular, this means that we have to first decide on a rank $r$ for our factorization. Then we can run SGD to find a rank $r$ factorization that approximates $A'$ well. The second issue is that the objective function $F(U,V,A')$ is not convex, so there can be local minima where the SGD algorithm gets stuck.
+There are two important issues to note about the SGD algorithm. Firstly, the above minimization requires fixed choices for the dimensions of both $U$ and $V$. In particular, this means that we have to first decide on a rank $r$ for our factorization. Then we can run SGD to find a rank $r$ factorization that approximates $M$ well. The second issue is that the objective function $F(U,V,M)$ is not convex, so there can be local minima where the SGD algorithm gets stuck.
 
 \subsubsection{Accelerated Proximal Gradient Descent}
 We use the Accelerated Proximal Gradient Descent algorithm described in \cite{APGPaper}. The objective function for the APG algorithm is given by:
 \[
-F(U,V,A') = {(i,j)\in S} \left(A'_{ij} - (UV^T)_{ij}\right)^2 + \mu \| UV^T\|_*
+F(U,V,M) = {(i,j)\in S} \left(M_{ij} - (UV^T)_{ij}\right)^2 + \mu \| UV^T\|_*
 \]
-where $\|UV^T\|_*$ is the nuclear norm of $UV^T$. The key point here is that the nuclear norm is a convex relaxation of the rank. This means that the above objective in some sense tries to minimize both the error in matching the revealed entries of $A'$, and some reasonable approximation of the rank of $B=UV^T$.
+where $\|UV^T\|_*$ is the nuclear norm of $UV^T$. The key point here is that the nuclear norm is a convex relaxation of the rank. This means that the above objective in some sense tries to minimize both the error in matching the revealed entries of $M$, and some reasonable approximation of the rank of $B=UV^T$.
 
 The algorithm has neither of the drawbacks of SGD. The user does not have to provide a guess for the rank, and the objective function is convex. Thus, the APG algorithm converges to a unique minimum, and there are theoretical guarantees on the convergence time.
 
 \subsubsection{Base Algorithm Choice: APG}
-We implemented both APG and SGD as described above, but it quickly became apparent that APG was superior for our purposes. The requirement that the user specify a rank for the factorization in SGD was a particularly large problem. First of all, having to specify a rank does not make a lot of sense when working with real-world data. For example, with a matrix of movie ratings it is not obvious apriori how many factors influence a user's movie preference. This is something that one would like the algorithm to do automatically, as APG does.
+We implemented both APG and SGD as described above, but it quickly became apparent that APG was superior for our purposes. The requirement that the user specify a rank for the factorization in SGD was a particularly large problem. First of all, having to specify a rank does not make a lot of sense when working with real-world data. For example, with a matrix of movie ratings it is not obvious apriori how many factors influence a user's movie preference. This is something that one would like the algorithm to determine automatically, as APG does.
 
 The second issue is that choosing the target rank of the factorization adds another parameter to the algorithm. Our optimizer uses data about the parameter settings of previous tasks to automatically choose parameters for a new task. As a result, the number of previous examples we need to cover the whole parameter space is exponential in the total number of parameters. So any additional parameter (such as the rank parameter to APG) greatly increases the number of examples required for the optimizer to preform well.
 
 The fact that the SGD objective function is not convex also causes multiple issues in our setting. We observed empirically that there was much more variance in the runtime and accuracy of SGD based on the starting point. Since the objective is not convex, we had to simply run SGD until the improvement at each iteration got small enough. Since there are several local minima, this can result in quite different run times even on matrices from the same distribution. 
 
 In comparison, APG has theoretical guarantees on its convergence, and we empirically observed that running for a fixed number of iterations on matrices from the same distribution resulted in relatively small variation in both error and runtime. This small variation is critical to the success of our optimizer in predicting the error and runtime of new matrix factorization tasks based on previous runs.
+
+\subsection{Matrix Projection Algorithm Choices}
+We implemented two possible algorithms for the matrix projection that occurs in the combine step of DFC. The first was Column Projection and the second was Randomized Projection.
+
+\subsubsection{Column Projection}
+Given factorizations $(U_i,V_i)$ of each column slice $M_i$, the Column Projection algorithm simply projects each factorization $U_i V_i^T$ for $i \geq 2$ onto the column space of $U_1$. For each $i \geq 2$ this gives a new set of factorizations $U_1 \hat{V}_i^T$. Now we let $V^T$ be the  matrix obtained by the concatenation $[\hat{V}_1^T, \hat{V}_2^T..., \hat{V}_k^T]$. Then our final combined factorization is given by $U_1 V^T$.
+
+Column Projection is very fast as it simply requires $k$ matrix projections. It does however rely on the assumption that the columns of $U_1$ span the column space of the full low-rank factorization of $M$. In situations where the size $n/k$ of a column slice is large relative to the rank of the factorization, this assumption is somewhat reasonable. However, there is still the risk that this projection method results in a small loss in accuracy due to the assumption.
+
+\subsubsection{Randomized Projection}
+Randomized Projection
