@@ -20,8 +20,15 @@ We implemented two base matrix factorization algorithms: Stochastic Gradient Des
 \subsubsection{Stochastic Gradient Descent}
 Let $S$ be the set of indices for the revealed entries of the noisy matrix $A'$. The objective function for the Stochastic Gradient Descent algorithm is given by:
 \[
-F(U,V,A') = \sum_{(i,j)\in S} \left(A'_{ij} - (UV^T)_{ij}\right)^2 + \sigma (\| U\|_F  + \| V\|_F)
+F(U,V,A') = \sum_{(i,j)\in S} \left(A'_{ij} - (UV^T)_{ij}\right)^2 + \mu (\| U\|^2_F  + \| V\|^2_F)
 \]
-where $\|U\|_F$ denotes the Frobenius norm of $U$ and $\sigma$ is a parameter. Intuitively, the first term in the objective function penalizes errors in matching the revealed entries of $A'$ and the second term is a regularization term to prevent over-fitting.
+where $\|U\|_F$ denotes the Frobenius norm of $U$ and $\mu$ is a parameter. Intuitively, the first term in the objective function penalizes errors in matching the revealed entries of $A'$ and the second term is a regularization term to prevent over-fitting. The SGD algorithm uses standard gradient descent techniques to compute $\mbox{argmin}_{U,V} F(U,V,A')$. 
 
-The SGD algorithm uses standard gradient descent techniques to compute $\mbox{argmin}_{U,V} F(U,V,A')$. It is very important to note that this minimization requires fixed choices for the dimensions of both $U$ and $V$. In particular, this means that we have to first guess a rank $r$ and then see how well SGD can find a rank $r$ factorization that approximates $A'$ well.
+There are two important issues to note about the SGD algorithm. Firstly, the above minimization requires fixed choices for the dimensions of both $U$ and $V$. In particular, this means that we have to first decide on a rank $r$ for our factorization. Then we can run SGD to find a rank $r$ factorization that approximates $A'$ well. The second issue is that the objective function $F(U,V,A')$ is not convex, so there can be local minima where the SGD algorithm gets stuck.
+
+\subsubsection{Accelerated Proximal Gradient Descent}
+The objective function for the APG algorithm is given by:
+\[
+F(U,V,A') = {(i,j)\in S} \left(A'_{ij} - (UV^T)_{ij}\right)^2 + \mu \| UV^T\|_*
+\]
+where $\|UV^T\|_*$ is the nuclear norm of $UV^T$. The key point here is that the nuclear norm is a convex relaxation of the rank. This means that the above objective in some sense tries to both minimize the error in matching the revealed entries of $A'$, as well as minimize some approximation of the rank of $B=UV^T$.
