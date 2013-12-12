@@ -1,9 +1,13 @@
 % !TeX root = 
 
 When designing the optimizer, our goals were to provide a simple 
-interface to the user and ensure architecture-independence. To meet
+interface to the user and ensure architecture-independence. To meet the
+objective of a simple user interface, the optimizer must be able to
+make parameter choices based only on user-specified time, accuracy, and
+monetary budget constraints. To meet
 the objective of architecture-independence, the optimizer needs to gather
-data about jobs run in its specific architecture context.  
+data about jobs run in its specific architecture context. Below,
+we describe the design of the optimizer in pursuit of these goals. 
 
 \subsection{Optimizer System Context}
 
