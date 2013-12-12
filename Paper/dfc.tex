@@ -27,8 +27,19 @@ where $\|U\|_F$ denotes the Frobenius norm of $U$ and $\mu$ is a parameter. Intu
 There are two important issues to note about the SGD algorithm. Firstly, the above minimization requires fixed choices for the dimensions of both $U$ and $V$. In particular, this means that we have to first decide on a rank $r$ for our factorization. Then we can run SGD to find a rank $r$ factorization that approximates $A'$ well. The second issue is that the objective function $F(U,V,A')$ is not convex, so there can be local minima where the SGD algorithm gets stuck.
 
 \subsubsection{Accelerated Proximal Gradient Descent}
-The objective function for the APG algorithm is given by:
+We use the Accelerated Proximal Gradient Descent algorithm described in \cite{APGPaper}. The objective function for the APG algorithm is given by:
 \[
 F(U,V,A') = {(i,j)\in S} \left(A'_{ij} - (UV^T)_{ij}\right)^2 + \mu \| UV^T\|_*
 \]
-where $\|UV^T\|_*$ is the nuclear norm of $UV^T$. The key point here is that the nuclear norm is a convex relaxation of the rank. This means that the above objective in some sense tries to both minimize the error in matching the revealed entries of $A'$, as well as minimize some approximation of the rank of $B=UV^T$.
+where $\|UV^T\|_*$ is the nuclear norm of $UV^T$. The key point here is that the nuclear norm is a convex relaxation of the rank. This means that the above objective in some sense tries to minimize both the error in matching the revealed entries of $A'$, and some reasonable approximation of the rank of $B=UV^T$.
+
+The algorithm has neither of the drawbacks of SGD. The user does not have to provide a guess for the rank, and the objective function is convex. Thus, the APG algorithm converges to a unique minimum, and there are theoretical guarantees on the convergence time.
+
+\subsubsection{Base Algorithm Choice: APG}
+We implemented both APG and SGD as described above, but it quickly became apparent that APG was superior for our purposes. The requirement that the user specify a rank for the factorization in SGD was a particularly large problem. First of all, having to specify a rank does not make a lot of sense when working with real-world data. For example, with a matrix of movie ratings it is not obvious apriori how many factors influence a user's movie preference. This is something that one would like the algorithm to do automatically, as APG does.
+
+The second issue is that choosing the target rank of the factorization adds another parameter to the algorithm. Our optimizer uses data about the parameter settings of previous tasks to automatically choose parameters for a new task. As a result, the number of previous examples we need to cover the whole parameter space is exponential in the total number of parameters. So any additional parameter (such as the rank parameter to APG) greatly increases the number of examples required for the optimizer to preform well.
+
+The fact that the SGD objective function is not convex also causes multiple issues in our setting. We observed empirically that there was much more variance in the runtime and accuracy of SGD based on the starting point. Since the objective is not convex, we had to simply run SGD until the improvement at each iteration got small enough. Since there are several local minima, this can result in quite different run times even on matrices from the same distribution. 
+
+In comparison, APG has theoretical guarantees on its convergence, and we empirically observed that running for a fixed number of iterations on matrices from the same distribution resulted in relatively small variation in both error and runtime. This small variation is critical to the success of our optimizer in predicting the error and runtime of new matrix factorization tasks based on previous runs.
