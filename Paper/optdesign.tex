@@ -1,0 +1,64 @@
+% !TeX root = 
+
+The optimizer was designed with the 
+\subsection{Optimizer Context}
+\subsubsection{Interface to User}
+\subsubsection{Interface to User}
+
+\subsection{Learning}
+
+In order to provide more accurate choices, our optimizer stores information
+about already completed jobs. For instances that come from the same distribution, we store the parameters with which the 
+
+
+\subsection{Choosing Parameters}
+
+When given a problem instance with a particular budget, our optimizer
+consults data from prior runs in order to select the algorithm 
+parameters. 
+
+\subsubsection{Choosing Parameters in the Absence of Data}
+
+Thus far, our described methods of parameter selection rely on a database
+of information about previously completed jobs. However, when instances
+from a new data distribution are initially run, there is no past data upon
+which we can draw.
+
+For this setting, we do the following: first, we run such a job for some
+small number of iterations, in order to get some cursory data (this can
+easily be modified as appropriate; we can run several small jobs, as the 
+time budget allows). Then, we use this data to create estimates of the 
+error, time to completion, and expenditure as a function of number of 
+iterations and number of processors used.
+
+From our empirical observations, the error is an exponential function of
+the number of iterations, with an additive term which depends on the number
+of processors:
+\[
+err(s,t) = A\cdot s + e^{-B\cdot t}.
+\]
+where $s$ is the number of processors and $t$ is the number of iterations, 
+and $A$ and $B$ are unknown constants. The time to completion, at least 
+in this method, we have observed to be a polynomial function of the 
+number of processors:
+\[
+time(s,t) = \frac{t}{s^{C}}.
+\]
+where again $s$ is the number of processors, $t$ is the number of iterations, and $C$ is some unknown constant. This is essentially an application of 
+Ahmdahl's Law, but for the application we chose to test on (DFC) the
+serial time is negligible compared to the parallel time.
+
+What we do in this case is try to fit the extant data from the small
+cursory runs to these models, and then use these estimates to choose
+the appropriate number of iterations and number of processors within the
+budget. In practice, initially our estimates are quite poor (see TODO).
+
+In order to prevent the optimizer from returning again and again to
+suboptimal parameter settings simply because they are known, we have 
+included an {\em explore mode}. In {\em explore mode}, randomization is
+used to avoid local optima in parameter selection. For example, given two
+parameter settings $p_1$ and $p_2$, with values $v_1$  and $v_2$ for the
+quantity being optimized, then $p_1$ is $\frac{v_1}{v_2}$ as likely to
+be chosen as $p_2$. 
+
+
