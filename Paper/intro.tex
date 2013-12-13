@@ -1,18 +1,88 @@
 % !TeX root = ../AdaptiveSeedingSTOC.tex
-With the rising ubiquity of the Internet in modern times, big data companies such as Google or Facebook have been able to gather increasingly massive amounts of data. These companies often want to leverage their huge databases to learn or predict new information. For example, Netflix utilizes user ratings to improve their recommendation system in order to find new and interesting movies for their users. In order to properly process these mountains of information, there has been considerable work on developing parallel algorithms for various machine learning tasks. For example, the Noisy Matrix Completion problem is at the core of many online recommendation systems. Recently a strongly parallel algorithm for this problem called Divide-Factor-Combine was developed at UC Berkeley[CITE]. 
+With the rising public use of the Internet in modern times, companies 
+such as Google or Facebook are gathering increasingly massive amounts 
+of data. These companies often want to leverage their huge databases to 
+learn and predict hidden information. For example, Netflix utilizes user 
+ratings to improve their recommendation system, which finds new and 
+interesting movies for their users to watch. In order to properly 
+process these mountains of information, researchers have invested
+considerable into the development of distributed algorithms for 
+various machine learning tasks. For example, the Noisy Matrix Factorization 
+problem is at the core of many online recommendation systems, and is
+also useful in concisely representing data. Recently, a strongly parallel 
+algorithm for this problem called Divide-Factor-Combine was developed 
+at UC Berkeley[CITE]. 
 
-Unfortunately, these algorithms require a significant amount of manual tweaking and adjusting of parameters in order to achieve good performance. Some algorithms are so sensitive that a small change in parameters can cause complete garbage to be returned. Additionally, in the case of parallel algorithms one has to choose how much to partition the data. On the one hand, too much partitioning can cause the algorithm to lose error guarantees and perform inadequately. On the other hand, too little partitioning can make the computation take an unacceptably long amount of time. The objectives of minimizing both the error and time of the computation are obviously in conflict. 
+These machine learning algorithms often take in many parameters, and
+to achieve the best results, the input parameters must be optimized for
+each specific application. In addition, the use of parallelism and the
+nature of convergent algorithms creates a tradeoff between time, accuracy,
+and the number of processors or machines tasked with the computation. 
+On the one hand, too much parallelism can cause the algorithm to lose 
+error guarantees and perform inadequately. On the other hand, too 
+little parallelism can make the computation take an unacceptably long 
+amount of time. On top of that, monetary budgets may restrict the number
+of machines or processors one is willing to dedicate to the task, limiting
+the capacity for parallelism. The objectives of minimizing both the error 
+and time of the computation within a monetary budget are obviously 
+in conflict.
 
-Further, different users may have different requirements over these domains. In the case of an online recommendation system, as more customers buy or rate products, it is necessary to rerun the machine learning task in order to ensure relevant recommendations. Here the user might have some time budget describing how long he can wait for the machine learning algorithm to run, and would want to minimize the prediction error of the algorithm subject to this budget. Another constraint a user might have is an actual monetary budget. For example running a distributed computation on an Amazon EC2 cluster can be costly.
+Further, different users may have different requirements over these 
+domains. In the case of an online recommendation system, as more 
+customers buy or rate products, it is necessary to rerun the machine 
+learning task in order to ensure relevant and current recommendations. 
+Here the user may have some time budget describing how long he can wait 
+for the machine learning algorithm to run, and would want to minimize 
+the prediction error of the algorithm subject to this budget. On the other
+hand, a genome scientist who has collected partial genetic data 
+across many organisms may care more about maximizing the accuracy of the
+phenotype prediction, but have a much more relaxed time budget. 
 
-Often an operator who is extremely familiar with both the dataset and the algorithm is required in order to achieve optimal results for a particular problem instance. However, these skilled workers can be difficult to find and expensive to hire and hold. For these reasons, it is very desirable to have an automated process that can pick settings that will be reasonable, and hopefully even close to optimal. 
+Either extensive empirical tests or an operator who is extremely 
+familiar with both the dataset and the algorithm is required in order 
+to achieve optimal results for a particular problem instance. In addition,
+optimized parallelization choices might meet time budgets on one particular
+architecture but fail on another, as communication times and machine
+speeds can vary drastically. For these reasons, it is very desirable 
+to have an automated process that can pick settings that meet budgets
+reliably, and solve the problem optimally within budget constraints; such
+an automated process could be architecture-independent, and adapt 
+as the distribution of input data changes over time. 
 
 \subsection{Previous Work}
-There has been a large amount of work on automatic parameter choice, especially for regularization parameters in various regression algorithms [CITE,CITE,CITE]. However, many of these results depend on assuming some underlying structure in the data, and exploiting that in order to provide analytic techniques that compute the optimal or near-optimal choice of parameter. Many of these automatic tuning algorithms are also extremely application-specific. 
+There has been a large amount of work on automatic parameter choice, 
+especially for regularization parameters in various regression algorithms 
+[CITE,CITE,CITE]. However, many of these results depend on assuming some 
+underlying structure in the data, and exploiting that in order to provide 
+analytic techniques that compute the optimal or near-optimal choice of 
+parameter. Many of these automatic tuning algorithms are also extremely 
+application-specific. 
 
-To our knowledge, there is no general framework for automating parameter choice that can be applied independent of algorithm or task. In this work we propose a system to optimize parameters that depends only on the input and output of the algorithm. Our system does not assume any underlying data model, and only uses its own history to estimate optimal parameters. This approach may give worse results than the model approach if the model is chosen very carefully (or luckily), but this is not always possible.
+To our knowledge, there is no general framework for automating parameter 
+choice that can be applied independent of algorithm or task. In this work 
+we propose a system to optimize parameters that depends only on the input 
+and output of the algorithm. Our system does not assume any underlying 
+data model, and only uses its own history to estimate optimal parameters. 
+This approach may give worse results than the model approach if the model 
+is carefully chosen, but this is not always possible, and it does not
+allow for changes to the data over time.
 
 \subsection{Our Contribution}
-In this work we propose an optimizer for choosing parameter settings for distributed machine learning algorithms, in particular for distributed matrix computations. Given input data and user-specified budgets, our optimizer automatically chooses algorithm parameters to minimize error while not going over-budget. The optimizer maintains a database of the parameter choices and empirical performance of previous jobs, and uses this stored information to choose optimal parameters for new incoming jobs.
+In this work we propose an optimizer for choosing parameter settings for 
+distributed machine learning algorithms, in particular for distributed 
+matrix computations. Given input data and user-specified budgets, our 
+optimizer automatically chooses algorithm parameters to minimize either
+time, error, or monetary expenditure while not going over-budget in any 
+of these realms. The optimizer maintains a database of the parameter 
+choices and empirical performance of previous jobs, and uses this stored 
+information to choose optimal parameters for new incoming jobs.
 
-The optimizer has done quite well in our tests, consistently performing as well as the best possible manual choice of parameters. Our preliminary implementation currently does optimization for the Divide-Factor-Combine algorithm for Noisy Matrix Completion. Our tests were preformed on both synthetic and real-world data in the form of Gaussian random matrices and the Movielens10M dataset[CITE]. Generalizing the optimizer framework to support more machine learning tasks is the subject of ongoing work.
+Our optimizer has done quite well in tests, consistently performing as 
+well as the best possible manual choice of parameters. Our preliminary 
+implementation currently optimizes the Divide-Factor-Combine algorithm 
+for Noisy Matrix Factorization. Our tests were preformed on both synthetic 
+and real-world data. Our synthetic data was in the form of Gaussian 
+random matrices, and our real-world data was the Movielens10M 
+dataset[CITE]. We have designed out optimizer to be general and easily 
+extensible, and adding additional machine learning algorithms to our 
+optimizer framework is the subject of ongoing work.
