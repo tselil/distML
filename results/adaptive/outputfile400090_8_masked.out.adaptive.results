@@ -1,0 +1,2 @@
+slices	iterations	RMSE	overhead	subproblem time	projection time
+7	10	0.268416	0.0	33.655	0.0
