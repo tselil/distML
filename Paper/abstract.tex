@@ -1,2 +1,26 @@
 % !TeX root = 
-Distributed matrix computations are becoming more and more ubiquitous in the world. Algorithms for problems like Noisy Matrix Factorization have applications in many areas such as the recommender systems used by Netflix, Movielens, and many others. These algorithms have many parameters and settings that must be tweaked in order to achieve specified error or time bounds. Many operators simply manually tweak the parameters to get whatever behavior they require, however this is clearly both expensive and prone to error. In this work we propose a general system to automate parameter choice for distributed matrix computations. We implement our optimizer and use it to optimize the division parameter in Divide-Factor-Combine (DFC), a recently-developed matrix factorization algorithm. We find that running the algorithm with the optimizer-chosen parameters yields the best behavior of any manually chosen parameter setting, regardless of any constraints imposed on the time or error of the computation.
+Distributed matrix computations are essential in many big data 
+applications. Algorithms for problems such as Noisy Matrix Factorization 
+have applications in many areas such as recommender systems (i.e. Netflix),
+succinct data storage, clustering, and more. For large matrices, these
+algorithms quickly become computationally expensive, and it is necessary
+to allocate computational resources (such as processors and amount of
+time spent) wisely. In addition, these algorithms often take many input
+parameters, and these parameters influence the accuracy of the outcome
+or the total runtime. 
+
+Though it is possible to determine the best parameters
+empirically, this is both computationally expensive and prone to error. 
+In addition, different datasets may respond differently to parameter
+settings, and parameter settings that were good for a problem instance
+may become suboptimal as time progresses and the input data changes.
+
+In this work we describe a general system that, given an input problem, 
+a distributed algorithm, and a computational budget, automates parameter 
+choices for distributed matrix computations. We implement this optimizer,
+focusing specifically on automating the choice of degree of parallelism. 
+As a trial application, we use the optimizer on the Divide-Factor-Combine
+algorithm (DFC), a recently-developed matrix factorization algorithm. 
+We find that running the algorithm with the optimizer-chosen parameters 
+yields errors that are as low as possible given the time and monetary 
+budgets imposed.
