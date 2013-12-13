@@ -29,6 +29,21 @@ and this in turn would greatly decrease the number of samples that
 the optimizer needs to encounter in {\em estimation mode} before it can
 make optimal parameter choices. 
 
+Another way in which our optimizer is limited is that currently, unless
+estimation mode is enabled, it does not choose points in the parameter
+space which have not yet been tried. 
+This means that sometimes we have a relatively large amount of time or
+money left in our budget, which we could use on more iterations, but the
+optimizer does not do this because it doesn't have information about 
+whether it will go over budget. 
+While it is infeasible to correct this without first
+improving the accuracy of our estimates, it makes sense to have
+the optimizer automatically make estimates for and consider points in the
+parameter space which are ``close'' 
+to instances it has already seen--this will
+enable a more thorough charting of the parameter space, which may yield
+a higher utilization of the computational resources within the budget. 
+
 In line with this, it may make sense to require each algorithm to provide 
 the optimizer with a notion of ``distance'' between problem instances.
 In the case of DFC, our notion of distance was comparing the number
