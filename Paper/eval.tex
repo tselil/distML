@@ -4,15 +4,15 @@ In this section we evaluate the ability of the optimizer to optimize a single pa
 
 \subsection{Methodology}
 
-We evaluate BESTBUY on both Gaussian Random matrices and the Movielens10M dataset (available [HERE]). For each of the two datasets, we divided the available data into several partitions. For the random matrices we used five partitions, and this simply meant one matrix per partition. For the Movielens data (which is one enormous matrix), we partitioned the rows of the matrix into seven pieces. This gave the two datasets a comparable number of nonzero entries per partition. 
+We evaluate the optimizer on both Gaussian Random matrices and the Movielens10M dataset (available at \url{http://grouplens.org/datasets/movielens/}). For each of the two datasets, we divided the available data into several partitions. For the random matrices we used five partitions, and this simply meant one matrix per partition. For the Movielens data (which is one enormous matrix), we partitioned the rows of the matrix into seven pieces. This gave the two datasets a comparable number of nonzero entries per partition. 
 
 After partitioning the data, we group the partitions into training data and testing data. We used all but one partition for both datasets as training data on which to run DFC computations. The optimizer was then fed the input and output profiles of these computations to use in its database. We used the final partition to test the predictions of the optimizer. 
 
-Our goal was for the optimizer to automatically choose the degree of parallelism in the DFC algorithm, i.e. how much to slice the input matrix in the Divide step. We asked for the computations to be completed within a specified amount of time while minimizing the error, and DFC computations with manually-chosen parameters designed to meet these budgets were performed on this testing data, as well as a DFC computation with optimizer-chosen division. 
+Our goal was for the optimizer to automatically choose the degree of parallelism in the DFC algorithm, i.e. how much to slice the input matrix in the Divide step. We asked for the computations to be completed within a specified amount of time while minimizing the error, and DFC computations with manually-chosen parameters designed to meet these budgets were performed on this testing data, as well as a DFC computation with optimizer-chosen division. Error was computed using the Root Mean Square Error (RMSE) of the factorization model compared to the revealed entries, and the time of a computation is defined as the maximum time of a slice computation plus the time it takes to finish the projection step of DFC.  
 
-The evaluation metric we chose was, for each time budget, the error of the optimized parameters compared to the error of the \emph{best} run with manually-chosen parameters. We will see soon that the optimizer performs as well as the best parameter for every budget, even when that parameter changes depending on the budget. Finally, we performed cross-validation, i.e. training and testing was done with each of the partitions used as testing data, and we obtain very consistent results. 
+The evaluation metric we chose was, for each time budget, the error of the optimized parameters compared to the error of the \emph{best} run with manually-chosen parameters. We define the \emph{regret} of the optimizer on these instances as the average over the budgets of the percent difference in error of the optimized and manual parameters. We will see soon that the optimizer performs as well as the best parameter for every budget, even when that parameter changes depending on the budget. Finally, we performed cross-validation, i.e. training and testing was done with each of the partitions used as testing data, and we obtain very consistent results. 
 
-The tests were all performed on the Amazon EC2 Cluster using medium instances. [INSERT SOME MORE DESCRIPTIONS HERE]. 
+We implemented the DFC algorithm in SparkR[CITE], and the optimizer in Python. All of our tests were performed on the Amazon EC2 Cluster using medium instances. 
 
 \subsection{Gaussian Random Matrices}
 The first dataset we tested the optimizer on was a synthetic dataset containing many low rank randomly generated matrices. The matrices were generated according to the following procedure: 
@@ -27,9 +27,9 @@ This procedure generates a noisy copy of a rank $r$ random matrix whose entries 
 
 We generated five $4000 \times 4000$ matrices with 
 \[(r,p,\sigma^2) = (10,.1,.01),\] 
-and split the data into training/testing splits as mentioned in the previous section. Figure 1 displays the results of one of the training/testing splits of the data. Each curve of the graph represents a choice of the division parameter in DFC. The first graph is the training data and we can empirically see that there are specific intersection points where the parameter choice should change. 
+and split the data into training/testing splits as mentioned in the previous section. Figure 1 displays the results of one of the training/testing splits of the data. Each curve of the graph represents a choice of the division parameter in DFC. The first graph is the training data and we can empirically see that there are specific intersection points where the parameter choice should change. The second graph shows the error of DFC computations with manually chosen and optimized parameters. Each curve represents a specific choice of the division parameter, and the bold curve represents the choices made by the optimizer. We can see that the optimizer consistently chooses whichever division optimizes the error within the specified time budget. 
 
-[SMALL DESCRIPTION OF PLOTS EXPLAINING WHY THE OPTIMIZER IS BITCHIN (can't do this now because the plots have to change to be visible in b/w)]. Averaged over all the cross-validations, the optimized parameter choices perform within [SOME NUMBER] of minimal error, and coming within [SOME NUMBER] of the budget.
+Table 1 summarizes the results of each of the training/testing splits. Averaged over all these splits, the optimized parameter choices perform within [SOME NUMBER] of minimal error, and coming within [SOME NUMBER] of the budget.
 
 \begin{figure*}
 	\begin{subfigure}[b]{.45\textwidth}
@@ -50,17 +50,15 @@ and split the data into training/testing splits as mentioned in the previous sec
 \end{figure*}
 
 \subsection{Movielens Data}
-The second dataset we used to test BESTBUY was the Movielens10M dataset (available [HERE]). The Movielens dataset is a set of entries $(\text{UserID},\text{MovieID},\text{rating})$, with the rating parameter being a half-integer between $1$ and $5$. One can think of these three-tuples as specifying the entries of a matrix with rows and columns indexed by users and movies. 
+The second dataset we used to test the optimizer was the Movielens10M dataset. The Movielens dataset is a set of entries $(\text{UserID},\text{MovieID},\text{rating})$, with the rating parameter being a half-integer between $1$ and $5$. One can think of these three-tuples as specifying the entries of a matrix with rows and columns indexed by users and movies. 
 
 The reason we might want to find a low-rank completion of this matrix is the assumption that there are a small number of properties that influence the way people rate movies. Then the two factors tell you how a person values each property, and how each movie is correlated with these properties. This lets you make predictions even on the hidden entries of the matrix, i.e. the movies a user has yet to see or rate. 
 
 There are some qualitative differences between this data and the synthetic data in the previous section. The entries come from the range $[1,5]$ rather than being concentrated around zero, and thus the RMSE's for this section are much larger. The Gaussian matrices also come from a well-understood distribution so DFC comes with some theoretical guarantees and its behavior is pretty consistent across different random matrices. We have no such guarantee here, and we hope that the Movielens users behave similarly across partitions. 
 
-The dataset was partitioned by the UserID into seven different pieces and the pieces were grouped to form the training/testing splits mentioned in the first section. Figure 2 displays the results of one of these splits. As before, each curve represents one of the choices of the division parameter in DFC. Once again we observe the intersection points where the division parameter should be changed for optimality to be satisfied. 
+The dataset was partitioned by the UserID into seven different pieces and the pieces were grouped to form the training/testing splits mentioned in the first section. Figure 2 displays the results of one of these splits. As before, each curve represents one of the choices of the division parameter in DFC. Once again we observe the intersection points where the division parameter should be changed for optimality to be satisfied. The bold line represents the optimized parameters for each budget. The graphs here are qualitatively the same as the graphs from the previous section. For every time budget, the optimizer picks the best division parameter. 
 
-[SMALL DESCRIPTION OF PLOTS EXPLAINING WHY THE OPTIMIZER IS BITCHIN (can't do this now because the plots have to change to be visible in b/w)]. Averaged over all the cross-validations, the optimized parameter choices perform within [SOME NUMBER] of minimal error, and coming within [SOME NUMBER] of the budget.
-
-\subsection{Testing Explore Mode}
+Table 2 summarizes the results of each of the training/testing splits for the Movielens dataset. Averaged over all these splits, the optimized parameter choices perform within [SOME NUMBER] of minimal error, and coming within [SOME NUMBER] of the budget.
 
 \begin{figure*}
 	\begin{subfigure}[b]{.45\textwidth}
@@ -79,3 +77,8 @@ The dataset was partitioned by the UserID into seven different pieces and the pi
 \hfill
 	\caption{Plots of Time and Error taken to factor the Movielens10M Dataset partitions.}	
 \end{figure*}
+
+\subsection{Testing Explore Mode}
+The previous sections show that our optimizer performs quite well when its training set accurately reflects the behavior of the algorithm on future jobs. However, sometimes an application can receive an instance that is unlike the previously seen jobs. In this case, we want to use some randomness while picking our parameters so that we can explore the parameter space. We would like to explore without sacrificing too much in the error or time of the computation, so we pick parameters proportionally to the error we expect to get with those settings. 
+
+We tested this functionality by beginning with estimations for small Gaussian inputs and feeding the optimizer larger matrices. We gave the optimizer training data from $2000 \times 2000$ Gaussian random matrices and applied our estimation method to guess runtime profiles for $4000 \times 4000$ Gaussian random matrices. Finally, we gave the optimizer a sequence of ten $4000 \times 4000$ Gaussian random matrices and asked the computation to finish within two-hundred seconds. While exploring, the optimizer was able to find a parameter setting with an error that was within $15\%$ of the best parameter choice that satisfies that budget that we could find in hindsight. It did not find better settings because we over-estimated the amount of time per iteration, and so the optimizer did not try running with more iterations because it thought that would violate the budget.
