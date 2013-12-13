@@ -2,37 +2,41 @@
 size <- 4000
 masked <- 90
 slices <- c(1,2,4,6,8)
+
+# Parts to Train on, and validate on. They SHOULD NOT overlap
 parts <- c(1,2,3,4)
+validate <- 5
+
+
 test <- c(10)
 II <- length(slices) # Slices range
 JJ <- length(parts) # Trials range
 plot_colors <- c("red","blue","green","purple","dark blue","black")
 margins <- c(6,6,6,6)
 
+# Params for Gaussians
 xlims <- c(0,700)
 ylims <- c(.06,.1)
-legendloc <- c(400,.1)
+legendloc <- c(350,.1)
 
+# Params for Movielens
 #xlims <- c(0,800)
 #ylims <- c(.4,1)
 #legendloc <- c(400,1)
 
 ######################################################
-file <- paste(size,masked,sep="")
-#filename <- paste("results/movielens/movielens10M_part1",file,sep="")
-title <- paste("Trained on Average RMSE vs. Time over ",length(parts)," Trials:\nMovielens10M Data",sep="")
-#title2 <- "RMSE vs. Money for a 2000 x 2000 MC Problem"
-outputfile <- paste("poster/4000_90_1_to_5_RvT_graph.pdf",sep="")
-
-outputfile2 <- paste(file,"RvD_graph.pdf",sep="")
 
 # filenames[[I]][[J]] is the filename of data for slices[I] on trials[J]
 
+# Params for Gaussians
 filenames <- lapply(seq(1,length(slices)), function(i) lapply(seq(1,length(parts)), function(j) paste("results/gaussian/4k/outputfile400090_",parts[j],"_masked.out.slices",slices[i],".results.out",sep="")))
 outputfile <- paste("poster/4000_90_1_to_4_RvT_graph.pdf",sep="")
+title <- paste("Trained on Average RMSE vs. Time over ",length(parts)," Trials:\nGaussian Random Matrices",sep="")
 
+# Params for Movielens
 #filenames <- lapply(seq(1,length(slices)), function(i) lapply(seq(1,length(parts)), function(j) paste("results/movielens/movielens10M_part",parts[j],".mm.slices",slices[i],".results.out",sep="")))
 #outputfile <- paste("poster/movielens10M_1_to_4_RvT_graph.pdf",sep="")
+#title <- paste("Trained on Average RMSE vs. Time over ",length(parts)," Trials:\nMovielens10M Data",sep="")
 
 pdf(outputfile)
 x <- list()
@@ -96,18 +100,19 @@ dev.off()
 ########################################################################################
 # Second Graph: Optimizer and Test Data
 
+# Params for Gaussians
 opt_title <- "Fixed-parameter and Optimized Time vs. Error:\nGaussian Random Matrices"
 opt_output <- "poster/Opt_Gaussian_4000.pdf"
 filenames_to_plot <- lapply(seq(1,length(slices)), function(i) paste("results/gaussian/4k/outputfile400090_5_masked.out.slices",slices[i],".results.out",sep=""))
 opt_pts <- c(100,125,150,175,200,250,300,400,700)
-opt_filenames <- lapply(seq(1,length(opt_pts)), function(i) paste("optResults/4k_no5_",opt_pts[i],".results",sep=""))
+opt_filenames <- lapply(seq(1,length(opt_pts)), function(i) paste("optResults/4k_no",validate,"_",opt_pts[i],".results",sep=""))
 
+# Params for Movielens
 #opt_title <- "Fixed-parameter and Optimized Time vs. Error:\nMovielens10M Data"
 #opt_output <- "poster/Opt_movielens.pdf"
 #filenames_to_plot <- lapply(seq(1,length(slices)), function(i) paste("results/movielens/movielens10M_part5.mm.slices",slices[i],".results.out",sep=""))
 #opt_pts <- c(100,125,150,175,200,250,300,400,700)
-#opt_filenames <- lapply(seq(1,length(opt_pts)), function(i) paste("optResults/movie_no5_",opt_pts[i],".results",sep=""))
-
+#opt_filenames <- lapply(seq(1,length(opt_pts)), function(i) paste("optResults/movie_no",validate,"_",opt_pts[i],".results",sep=""))
 
 pdf(opt_output)
 data <- lapply(seq(1,length(filenames_to_plot)), function(i) read.table(filenames_to_plot[[i]],header=T,sep="\t"))
