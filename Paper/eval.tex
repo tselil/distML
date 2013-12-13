@@ -78,6 +78,9 @@ Table 2 summarizes the results of each of the training/testing splits for the Mo
 	\caption{Plots of Time and Error taken to factor the Movielens10M Dataset partitions.}	
 \end{figure*}
 
+\subsection{Training on less Data}
+In an effort to discover how much training data we need for accurate optimizer predictions, we also ran some tests on training/testing splits with smaller training sets. Instead of training on all six data partitions, we tried training the optimizer on only two partitions and testing it on the remaining five. The optimizer performs basically as well as if we had trained on almost all the partitions. Table 3 summarizes these results. We believe this is because the data is qualitatively the same across all the partitions, so the additional partitions do not add a lot of information to the optimizer. Distributions with higher variance in behavior may require significantly more learning, though we have not yet tested this. 
+
 \subsection{Testing Explore Mode}
 The previous sections show that our optimizer performs quite well when its training set accurately reflects the behavior of the algorithm on future jobs. However, sometimes an application can receive an instance that is unlike the previously seen jobs. In this case, we want to use some randomness while picking our parameters so that we can explore the parameter space. We would like to explore without sacrificing too much in the error or time of the computation, so we pick parameters proportionally to the error we expect to get with those settings. 
 
