@@ -13,6 +13,8 @@ we describe the design of the optimizer in pursuit of these goals.
 
 \subsection{Optimizer System Context}
 
+In this subsection, we discuss interactions between the optimizer and 
+the user and algorithmic infrustructure that together form the system. 
 
 \subsubsection{Interface to User}
 The user's interface with the optimizer is simple: the user needs to
@@ -93,6 +95,10 @@ from these as well.
 %------------------------------------------------
 
 \subsection{Choosing Parameters}
+
+In this subsection, we discuss the way in which our optimizer utilizes
+its data to select parameters, and the way in which it obtains information
+in the absence of data. 
 
 \subsubsection{Choosing Parameters using Learned Data}
 When given a problem instance with a particular budget, our optimizer
