@@ -31,7 +31,7 @@ and split the data into training/testing splits as mentioned in the previous sec
 
 [SMALL DESCRIPTION OF PLOTS EXPLAINING WHY THE OPTIMIZER IS BITCHIN (can't do this now because the plots have to change to be visible in b/w)]. Averaged over all the cross-validations, the optimized parameter choices perform within [SOME NUMBER] of minimal error, and coming within [SOME NUMBER] of the budget.
 
-\begin{figure}
+\begin{figure*}
 	\begin{subfigure}[b]{.45\textwidth}
 \begin{center}
 		\fbox{\includegraphics[width=\textwidth]{Graphs/4000_90_1_to_4_RvT_graph.pdf}}
@@ -47,7 +47,7 @@ and split the data into training/testing splits as mentioned in the previous sec
 	\end{subfigure}
 \hfill
 	\caption{Plots of Time and Error taken to factor a 4000 by 4000 matrix drawn from a Gaussian distribution.}	
-\end{figure}
+\end{figure*}
 
 \subsection{Movielens Data}
 The second dataset we used to test BESTBUY was the Movielens10M dataset (available [HERE]). The Movielens dataset is a set of entries $(\text{UserID},\text{MovieID},\text{rating})$, with the rating parameter being a half-integer between $1$ and $5$. One can think of these three-tuples as specifying the entries of a matrix with rows and columns indexed by users and movies. 
@@ -62,7 +62,7 @@ The dataset was partitioned by the UserID into seven different pieces and the pi
 
 \subsection{Testing Explore Mode}
 
-\begin{figure}
+\begin{figure*}
 	\begin{subfigure}[b]{.45\textwidth}
 \begin{center}
 		\fbox{\includegraphics[width=\textwidth]{Graphs/movielens10M_1_to_4_RvT_graph.pdf}}
@@ -78,4 +78,4 @@ The dataset was partitioned by the UserID into seven different pieces and the pi
 	\end{subfigure}
 \hfill
 	\caption{Plots of Time and Error taken to factor the Movielens10M Dataset partitions.}	
-\end{figure}
+\end{figure*}
