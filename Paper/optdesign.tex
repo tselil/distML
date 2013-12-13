@@ -17,20 +17,20 @@ In this subsection, we discuss interactions between the optimizer and
 the user and algorithmic infrustructure that together form the system. 
 
 \subsubsection{Interface to User}
-The user's interface with the optimizer is simple: the user needs to
-provide a problem instance for the job, constraints on the amount of
+The user's interface with the optimizer is simple: the user
+provides a problem instance for the job and constraints on the amount of
 time and money that the job can spend and on the amount of error
 that is acceptable for the output. The user also specifies $X$, the 
 parameter to be optimized (currently, $X$ can be total runtime, total
 error, or amount of money spent).
 
-The user can also specify whether to run the optimizer in {\em explore 
+The user may also specify whether to run the optimizer in {\em explore 
 mode}, a mode suitable for high-variance data applications or if the 
 optimizer is in the initial stages of learning a new 
 distribution (see Section \ref{sec:explore}). The user can also specify
 whether to run the optimizer in {\em estimation mode}, a mode in which
 the optimizer augments its data with estimates of runtime and error 
-using previous jobs from a different parameter 
+based on previous jobs from a different parameter 
 subspace (see Section \ref{sec:estimate}). This is for example useful 
 if the optimizer has learned many examples of
 smaller or larger problem instances, but has relatively sparse data
@@ -174,49 +174,52 @@ prior jobs to models for $time$ and $error$ as functions of iterations,
 number of processors, and instance size. 
 
 
-{\em Error estimation:} From our empirical observations, the error is an exponential function of
-the number of iterations, with an additive term which depends on the number
-of processors:
+{\em Error estimation for DFC:} From our empirical observations, the 
+error in DFC is an exponential function of the number of iterations, 
+with an additive term which depends on the number of processors:
 \[
 err(s,t) = A\cdot s + e^{-B\cdot t}.
 \]
 where $s$ is the number of processors and $t$ is the number of iterations, 
 and $A$ and $B$ are unknown constants. As far as we have been abe to 
-discern, the error is not a function of instance size; however, this
+discern, the error for DFC is not a function of instance size; however, this
 may be because of the particular algorithm we chose for our tests. In 
 any case, this should vary from algorithm to algorithm.
 
-{\em Runtime estimation:} The time to completion, at least 
-in this method, we have observed to be a polynomial function of the 
-number of processors:
+{\em Runtime estimation for DFC:} For DFC, we have observed time to 
+completion to be a function of the number of entries and the number 
+of processors:
 \[
-time(s,t,n) = \frac{t\cdot n}{s^{C}}. % TODO CHECK THIS!!!!
+time(s,t,n) = C\cdot\frac{t\cdot n}{s^D}.
 \]
 where again $s$ is the number of processors, $t$ is the number of 
 iterations, $n$ is the number of revealed entries in the matrix, 
 and $C$ is some unknown constant. This is essentially an application of 
-Ahmdahl's Law, but for the algorithm we chose to test on (DFC) the
+Amdahl's Law \cite{A67}, but for the algorithm we chose to test on (DFC) the
 serial time is negligible compared to the parallel time. The model
 for the time dependence should also vary with the specific algorithm
 in question. 
 
 The way that the optimizer now works is it fits the extant data to
-these models, and then estimates the range of parameters which meet the
-budgets, and then populates the database with synthetic data 
+these models, uses the models to estimate the range of parameters 
+which meet the budgets, and then populates the database with synthetic data 
 over the relevant range. Then, the optimizer performs its usual
 parameter selection process, choosing the  number of iterations 
 and number of processors that optimize $X$ according to these estimates. 
-In practice, the quality of our estimates is very dependent on the 
-quality and quantity of data we already have 
-(see ?). % TODO: get this data here
+In practice, the accuracy of our estimates is quite low, and als very 
+dependent on the quality and quantity of data we already have 
+(see Section \ref{sec:estEval}). The direction of greatest potential 
+improvement here is more carefully choosing and fitting 
+the modeling functions--this is an algorithm-specific task.
 
 However, what matters is that the estimates of $X$ for different 
 parameter settings are relatively accurate; that is, if the true value 
 of $X$ will be better with parameter settings $p_1$ than with parameter
 settings $p_2$, then the estimated one should be better as well. Then, 
-if the optimizer is simultaneosly run in {\em explore mode}, the quality
+if the optimizer is simultaneosly run in {\em explore mode}
+(Section \ref{sec:explore}), the quality
 of predictions increases as the optimizer encounters more 
-instances (see ?). % TODO: get this data here 
+instances (again, see Section \ref{sec:estEval}).
 
 \subsubsection{Explore Mode}
 \label{sec:explore}
