@@ -1,4 +1,2 @@
 % !TeX root = 
-hey guys it's the abstract! Wow I'm doing math
-\[\sum_i \lambda_i x_ix_i^T = M\]
-and I can do math in text too by saying stuff like $2 \cdot 2 = 4$.
+Distributed matrix computations are becoming more and more ubiquitous in the world. Algorithms for problems like Noisy Matrix Factorization have applications in many areas such as the recommender systems used by Netflix, Movielens, and many others. These algorithms have many parameters and settings that must be tweaked in order to achieve specified error or time bounds. Many operators simply manually tweak the parameters to get whatever behavior they require, however this is clearly both expensive and prone to error. In this work we propose a general system to automate parameter choice for distributed matrix computations. We implement our optimizer and use it to optimize the division parameter in Divide-Factor-Combine (DFC), a recently-developed matrix factorization algorithm. We find that running the algorithm with the optimizer-chosen parameters yields the best behavior of any manually chosen parameter setting, regardless of any constraints imposed on the time or error of the computation.
