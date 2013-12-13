@@ -11,7 +11,7 @@ various machine learning tasks. For example, the Noisy Matrix Factorization
 problem is at the core of many online recommendation systems, and is
 also useful in concisely representing data. Recently, a strongly parallel 
 algorithm for this problem called Divide-Factor-Combine was developed 
-at UC Berkeley[CITE]. 
+at UC Berkeley\cite{MTJ13}. 
 
 These machine learning algorithms often take in many parameters, and
 to achieve the best results, the input parameters must be optimized for
@@ -52,7 +52,7 @@ as the distribution of input data changes over time.
 \subsection{Previous Work}
 There has been a large amount of work on automatic parameter choice, 
 especially for regularization parameters in various regression algorithms 
-[CITE,CITE,CITE]. However, many of these results depend on assuming some 
+\cite{CI12},\cite{GEE10},\cite{BBGH07}. However, many of these results depend on assuming some 
 underlying structure in the data, and exploiting that in order to provide 
 analytic techniques that compute the optimal or near-optimal choice of 
 parameter. Many of these automatic tuning algorithms are also extremely 
@@ -83,6 +83,6 @@ implementation currently optimizes the Divide-Factor-Combine algorithm
 for Noisy Matrix Factorization. Our tests were preformed on both synthetic 
 and real-world data. Our synthetic data was in the form of Gaussian 
 random matrices, and our real-world data was the Movielens10M 
-dataset[CITE]. We have designed out optimizer to be general and easily 
+dataset\footnote{\url{http://grouplens.org/datasets/movielens/}}. We have designed out optimizer to be general and easily 
 extensible, and adding additional machine learning algorithms to our 
 optimizer framework is the subject of ongoing work.
