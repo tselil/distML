@@ -588,8 +588,7 @@
  \setcounter{footnote}{0}
  \let\maketitle\relax
  \let\@maketitle\relax
- \gdef\@thanks{}\gdef\@author{}\gdef\@title{}\gdef\@subtitle{}\let\thanks\relax
- \@copyrightspace}
+ \gdef\@thanks{}\gdef\@author{}\gdef\@title{}\gdef\@subtitle{}\let\thanks\relax}
 
 %% CHANGES ON NEXT LINES
 \newif\if@ll % to record which version of LaTeX is in use
@@ -831,20 +830,20 @@
 %%% caption).
 %%%
 \newtoks\copyrightnotice
-\def\ftype@copyrightbox{8}
-\def\@copyrightspace{
-\@float{copyrightbox}[b]
-\begin{center}
-\setlength{\unitlength}{1pc}
-\begin{picture}(20,6) %Space for copyright notice
-\put(0,-0.95){\crnotice{\@toappear}}
-\end{picture}
-\end{center}
-\end@float}
+\def\ftype@copyrightbox{0}
+%\def\@copyrightspace{
+%\@float{copyrightbox}[b]
+%\begin{center}
+%\setlength{\unitlength}{0pc}
+%\begin{picture}(0,0) %Space for copyright notice
+%\put(0,0){\crnotice{\@toappear}}
+%\end{picture}
+%\end{center}
+%\end@float}
 
 \def\@toappear{} % Default setting blank - commands below change this.
-\long\def\toappear#1{\def\@toappear{\parbox[b]{20pc}{\baselineskip 9pt#1}}}
-\def\toappearbox#1{\def\@toappear{\raisebox{5pt}{\framebox[20pc]{\parbox[b]{19pc}{#1}}}}}
+\long\def\toappear#1{\def\@toappear{\parbox[b]{0pc}{\baselineskip 0pt#1}}}
+\def\toappearbox#1{\def\@toappear{\raisebox{0pt}{\framebox[0pc]{\parbox[b]{0pc}{#1}}}}}
 
 \newtoks\conf
 \newtoks\confinfo
