@@ -1,4 +1,4 @@
-For testing and evaluation of our optimizer we implemented several variants of the DFC (Divide-Factor-Combine) framework for distributed matrix completion, originally introduced in \cite{Ameet}.
+For testing and evaluation of our optimizer we implemented several variants of the DFC (Divide-Factor-Combine) framework for distributed matrix completion, originally introduced in \cite{MTJ13}.
 
 \subsection{DFC Framework Overview}
 In this section we describe the matrix factorization problem that the DFC framework solves, and also outline the three main steps in the algorithm. 
@@ -28,7 +28,7 @@ where $\|U\|_F$ denotes the Frobenius norm of $U$ and $\mu$ is a parameter. Intu
 There are two important issues to note about the SGD algorithm. Firstly, the above minimization requires fixed choices for the dimensions of both $U$ and $V$. In particular, this means that we have to first decide on a rank $r$ for our factorization. Then we can run SGD to find a rank $r$ factorization that approximates $M$ well. The second issue is that the objective function $F(U,V,M)$ is not convex, so there can be local minima where the SGD algorithm gets stuck.
 
 \subsubsection{Accelerated Proximal Gradient Descent}
-We use the Accelerated Proximal Gradient Descent algorithm described in \cite{APGPaper}. The objective function for the APG algorithm is given by:
+We use the Accelerated Proximal Gradient Descent algorithm described in \cite{TY10}. The objective function for the APG algorithm is given by:
 \[
 F(U,V,M) = \sum_{(i,j)\in \Omega} \left(M_{ij} - (UV^T)_{ij}\right)^2 + \mu \| UV^T\|_*
 \]
@@ -54,7 +54,7 @@ Given factorizations $(U_i,V_i)$ of each column slice $M_i$, the Column Projecti
 Column Projection is very fast as it simply requires $k$ matrix projections. It does however rely on the assumption that the columns of $U_1$ span the column space of the full low-rank factorization of $M$. In situations where the size $n/k$ of a column slice is large relative to the rank of the factorization, this assumption is somewhat reasonable. However, there is still the risk that this projection method results in a small loss in accuracy due to the assumption.
 
 \subsubsection{Randomized Projection}
-The Randomized Projection algorithm we use was introduced by Halko et. al. in \cite{Halko}. The algorithm is inspired by the Johnson-Lindenstrauss randomized method for metric embeddings. The algorithm involves sampling a random Guassian matrix and computing several QR factorizations. As a result, the algorithm is slower than the Column Projection algorithm. However, it has better theoretical guarantees on accuracy.
+The Randomized Projection algorithm we use was introduced by Halko et. al. in \cite{HMT10}. The algorithm is inspired by the Johnson-Lindenstrauss randomized method for metric embeddings. The algorithm involves sampling a random Guassian matrix and computing several QR factorizations. As a result, the algorithm is slower than the Column Projection algorithm. However, it has better theoretical guarantees on accuracy.
 
 \subsubsection{Projection Algorithm Choice: Randomized Projection}
 Despite the aforementioned tradeoffs in speed versus accuracy, we chose to use only the Randomized Projection algorithm. The reason for this was that it gave consistently better error than Column Projection, but the difference in runtime was very minimal. Further, the time take by the projection step in DFC is completely dominated by the time taken for the actual matrix factorizations. In particular, the projection time is less than $1\%$ of the time taken by the Factor step. As a result, accuracy at this step is more important than slight differences in run time. 
