@@ -1,6 +1,7 @@
 For testing and evaluation of our optimizer we implemented several variants of the DFC (Divide-Factor-Combine) framework for distributed matrix completion, originally introduced in \cite{Ameet}.
 
 \subsection{DFC Framework Overview}
+In this section we describe the matrix factorization problem that the DFC framework solves, and also outline the three main steps in the algorithm. 
 \subsubsection{Problem Definition}
 The DFC framework is used to solve the following well-studied noisy matrix completion problem: Let $A$ be an unknown $m\times n$ matrix of rank $r$, and assume $r<<m,n$. Next $A'$ is obtained by adding a small amount of noise to every entry of $A$. Finally, let $M$ be the matrix obtained by sampling a small fraction (e.g $10\%$) of the entries of $A'$, and setting all other entries to zero. We refer to $M$ as the matrix of revealed entries. The goal is then to find a low-rank matrix $B$ that is a good approximation of the original matrix $A$, using only the matrix $M$. The standard method of finding such a low rank matrix $B$ is to find a low-rank factorization $B=UV^T$ that agrees with $M$ on all of its non-zero entries.
 
