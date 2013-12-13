@@ -1,2 +1,60 @@
 We have designed and implemented an optimizer for distributed matrix 
-computation. 
+computation. Our optimizer stores data about previous jobs in order to
+choose the best parameters with wich to run an algorithm, allowing 
+the user to only specify a budget and freeing the user of making 
+the choices manually. Our optimizer performs well in our tests on both 
+synthetic and real-world data.
+
+While our optimizer is a layer that is essentially independent of 
+the algorithm upon which we tested it, our experiences with DFC
+yielded some interesting conclusions. Notably, we found that Stochastic
+Gradient Descent, while a popular and widely used algorith, % TODO: citation
+is not robust to noise and slight changes in initial conditions, and behaves
+erratically on high-variance data. The more complex Proximal Gradient
+Descent algorithm was much more stable, and also has the advantage of
+requiring fewer parameter settings (which allows systems such as our
+optimizer to provide good choices after fewer jobs).
+
+While the current system is a useful tool for automated parameter selection,
+it can be extended in many directions, and some of the system features
+can be further improved. One such feature is the 
+{\em estimation mode}--though it currently does somewhat successfully
+converge to good parameter choices without exceeding user 
+budgets, the estimations of runtime and error as a function of iterations,
+matrix size, and number of processors are highly inaccurate. This is 
+likely a problem with the models we have selected; more carefully fitting
+the data to a model that is not chosen based on relatively few empirical
+samples would probably go a long way towards improving these estimates,
+and this in turn would greatly decrease the number of samples that 
+the optimizer needs to encounter in {\em estimation mode} before it can
+make optimal parameter choices. 
+
+In line with this, it may make sense to require each algorithm to provide 
+the optimizer with a notion of ``distance'' between problem instances.
+In the case of DFC, our notion of distance was comparing the number
+of revealed entries in the problem instance matrix. However, this may
+not be a good notion of distance in every algorithm. If, for example, the 
+algorithm is sensitive to high variation in the input data, it would be
+good to base parameter choice based on previous jobs that are similar
+in the variation level as well as size. Though the parameter choices for
+DFC are quite good, it would be interesting to run see if there is a 
+more refined notion of distance that can be used, and then to relax the
+accuracy of the choice of ``input distribution'' and see whether the 
+optimizer can still make accurate predictions.
+
+Another target area for further investigation is whether more recent
+data should be more heavily weighted by the optimizer, both in the
+averaging function used in parameter selection and in the probabilities
+assigned in {\em explore mode}--while it is unclear that this will be 
+helpful in all cases, there are applications in which this could certainly
+be relevant, such as in a real-world dataset whose makeup can change
+over time. For example, if current events make people more politically
+polarized, then old jobs might yield runtime estimates that are not
+accurate for the newer, differently distributed data. 
+
+Finally, it would be interesting to see whether the optimizer can also 
+successfully optimize over the choice of algorithm. In some cases,
+different algorithms are more successful on different kinds of datasets, 
+and it is difficult to discern ahead of time which algorithm will be more
+successful. Our optimizer may be particulary suited to make this kind of
+choice.
