@@ -11,7 +11,7 @@ validate <- 5
 test <- c(10)
 II <- length(slices) # Slices range
 JJ <- length(parts) # Trials range
-plot_colors <- c("red","blue","green","purple","dark blue","black")
+plot_colors <- c("black","black","black","black","black","black")
 margins <- c(6,6,6,6)
 
 # Params for Gaussians
@@ -30,12 +30,12 @@ legendloc <- c(350,.1)
 
 # Params for Gaussians
 filenames <- lapply(seq(1,length(slices)), function(i) lapply(seq(1,length(parts)), function(j) paste("results/gaussian/4k/outputfile400090_",parts[j],"_masked.out.slices",slices[i],".results.out",sep="")))
-outputfile <- paste("poster/4000_90_1_to_4_RvT_graph.pdf",sep="")
+outputfile <- paste("Paper/Graphs/4000_90_1_to_4_RvT_graph.pdf",sep="")
 title <- paste("Trained on Average RMSE vs. Time over ",length(parts)," Trials:\nGaussian Random Matrices",sep="")
 
 # Params for Movielens
 #filenames <- lapply(seq(1,length(slices)), function(i) lapply(seq(1,length(parts)), function(j) paste("results/movielens/movielens10M_part",parts[j],".mm.slices",slices[i],".results.out",sep="")))
-#outputfile <- paste("poster/movielens10M_1_to_4_RvT_graph.pdf",sep="")
+#outputfile <- paste("Paper/Graphs/movielens10M_1_to_4_RvT_graph.pdf",sep="")
 #title <- paste("Trained on Average RMSE vs. Time over ",length(parts)," Trials:\nMovielens10M Data",sep="")
 
 pdf(outputfile)
@@ -79,13 +79,15 @@ for(i in seq(1,II)) {
 
 #png(filename="figure.png",height = 295,width=300,bg="white")
 par(bg = "white",mar=margins)
-plot(xav[[1]],yav[[1]],type="o",col=plot_colors[1],xlab="Time",ylab="RMSE",xlim=xlims,ylim=ylims,cex.lab=2)
+plot_symbols=c(15,16,17,18,19)
+plot_line_types = c(2,3,2,2,2)
+plot(xav[[1]],yav[[1]],type="o",col=plot_colors[1],xlab="Time",ylab="RMSE",xlim=xlims,ylim=ylims,cex.lab=2,pch=plot_symbols[1],lty=plot_line_types[1])
 
 #errbar(xav[[1]],yav[[1]],yplus=ysd[[1]],yminus=ysd[[1]])
 title(main=title, col.main="black",cex.main=1.7)
 
 for(i in seq(1,length(xav))) {
-	lines(xav[[i]],yav[[i]],type="o",col=plot_colors[i])
+	lines(xav[[i]],yav[[i]],type="o",col=plot_colors[i],pch=plot_symbols[i],lty=plot_line_types[i])
 	#Error bars
 	segments(xav[[i]], yav[[i]]-ysd[[i]],xav[[i]], yav[[i]]+ysd[[i]],lwd=2)
 	epsilon = 2
@@ -94,7 +96,7 @@ for(i in seq(1,length(xav))) {
 }
 
 legendcap = unlist(lapply(seq(1,II), function(i) paste(slices[i]," Slice",sep="")))
-legend(legendloc[1],legendloc[2],legendcap,col=plot_colors,pch=21,lty=1,cex=1.7)
+legend(legendloc[1],legendloc[2],c("1 Slice","2 Slices","4 Slices","6 Slices","8 Slices"),col=plot_colors,pch=plot_symbols,lty=plot_line_types,cex=1.7)
 dev.off()
 
 ########################################################################################
@@ -102,14 +104,14 @@ dev.off()
 
 # Params for Gaussians
 opt_title <- "Fixed-parameter and Optimized Time vs. Error:\nGaussian Random Matrices"
-opt_output <- "poster/Opt_Gaussian_4000.pdf"
+opt_output <- "Paper/Graphs/Opt_Gaussian_4000.pdf"
 filenames_to_plot <- lapply(seq(1,length(slices)), function(i) paste("results/gaussian/4k/outputfile400090_5_masked.out.slices",slices[i],".results.out",sep=""))
 opt_pts <- c(100,125,150,175,200,250,300,400,700)
 opt_filenames <- lapply(seq(1,length(opt_pts)), function(i) paste("optResults/4k_no",validate,"_",opt_pts[i],".results",sep=""))
 
 # Params for Movielens
 #opt_title <- "Fixed-parameter and Optimized Time vs. Error:\nMovielens10M Data"
-#opt_output <- "poster/Opt_movielens.pdf"
+#opt_output <- "Paper/Graphs/Opt_movielens.pdf"
 #filenames_to_plot <- lapply(seq(1,length(slices)), function(i) paste("results/movielens/movielens10M_part5.mm.slices",slices[i],".results.out",sep=""))
 #opt_pts <- c(100,125,150,175,200,250,300,400,700)
 #opt_filenames <- lapply(seq(1,length(opt_pts)), function(i) paste("optResults/movie_no",validate,"_",opt_pts[i],".results",sep=""))
@@ -133,12 +135,14 @@ opt_points <- do.call(rbind,opt)
 x_opt <- opt_points[,1]
 y_opt <- opt_points[,2]
 par(bg = "white",mar=margins)
-plot(x_opt,y_opt,type="o",col="black",lwd=3,xlab="Time",ylab="RMSE",xlim=xlims,ylim=ylims,cex.lab=2)
+plot(x_opt,y_opt,type="o",col="black",lwd=3,xlab="Time",ylab="RMSE",xlim=xlims,ylim=ylims,cex.lab=2,lty=1,pch=4)
 
+plot_symbols=c(15,16,17,18,19)
+plot_line_types = c(2,3,2,2,2)
 for(i in seq(1,length(x))) {
-	lines(x[[i]],y[[i]],type="o",col=plot_colors[i])
+	lines(x[[i]],y[[i]],type="o",col=plot_colors[i],pch=plot_symbols[i],lty=plot_line_types[i])
 }
-legend(legendloc[1],legendloc[2],c("1 Slice","2 Slices","4 Slices","6 Slices","8 Slices","Optimizer"),col=plot_colors,pch=21,lty=1,lwd=c(1,1,1,1,1,2),cex=1.7)
+legend(legendloc[1],legendloc[2],c("1 Slice","2 Slices","4 Slices","6 Slices","8 Slices","Optimizer"),col=plot_colors,pch=c(15,16,17,18,19,4),lty=c(2,3,2,2,2,1),lwd=c(1,1,1,1,1,3),cex=1.7)
 title(opt_title,cex.main=1.7)
 dev.off()
 

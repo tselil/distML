@@ -10,7 +10,7 @@ After partitioning the data, we group the partitions into training data and test
 
 Our goal was for the optimizer to automatically choose the degree of parallelism in the DFC algorithm, i.e. how much to slice the input matrix in the Divide step. We asked for the computations to be completed within a specified amount of time while minimizing the error, and DFC computations with manually-chosen parameters designed to meet these budgets were performed on this testing data, as well as a DFC computation with optimizer-chosen division. 
 
-The evaluation metric we chose was, for each time budget, the error of the optimized parameters compared to the error of the \emph{best} run with manually-chosen parameters. We will see soon that the optimizer performs as well as the best parameter for every budget, even when that parameter changes depending on the budget. Finally, we performed cross-validation, i.e. training and testing was done with each of the partitions used as testing data, and we obtain very consistent results. 
+The evaluation metric we chose was, for each time budget, the error of the optimized parameters compared to the error of the \emph{best} run with manually-chosen parameters. We define the \emph{regret} of the optimizer on these instances as the average over the budgets of the percent difference in error of the optimized and manual parameters. We will see soon that the optimizer performs as well as the best parameter for every budget, even when that parameter changes depending on the budget. Finally, we performed cross-validation, i.e. training and testing was done with each of the partitions used as testing data, and we obtain very consistent results. 
 
 The tests were all performed on the Amazon EC2 Cluster using medium instances. [INSERT SOME MORE DESCRIPTIONS HERE]. 
 
@@ -60,8 +60,6 @@ The dataset was partitioned by the UserID into seven different pieces and the pi
 
 [SMALL DESCRIPTION OF PLOTS EXPLAINING WHY THE OPTIMIZER IS BITCHIN (can't do this now because the plots have to change to be visible in b/w)]. Averaged over all the cross-validations, the optimized parameter choices perform within [SOME NUMBER] of minimal error, and coming within [SOME NUMBER] of the budget.
 
-\subsection{Testing Explore Mode}
-
 \begin{figure*}
 	\begin{subfigure}[b]{.45\textwidth}
 \begin{center}
@@ -79,3 +77,6 @@ The dataset was partitioned by the UserID into seven different pieces and the pi
 \hfill
 	\caption{Plots of Time and Error taken to factor the Movielens10M Dataset partitions.}	
 \end{figure*}
+
+\subsection{Testing Explore Mode}
+The previous sections show that our optimizer performs quite well when its training set accurately reflects the behavior of the algorithm on future jobs. However, sometimes an application can receive an instance that is unlike the previously seen jobs. In this case, we want to use some randomness while picking our parameters so that we can explore the parameter space. We would like to explore without sacrificing too much in the error or time of the computation, so we pick parameters proportionally to the error we expect to get with those settings. 
