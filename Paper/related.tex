@@ -1,16 +1,15 @@
-There has been a large amount of work on automatic parameter choice, 
-especially for regularization parameters in various regression algorithms 
-\cite{CI12},\cite{GEE10},\cite{BBGH07}. However, many of these results depend on assuming some 
+There has been a large amount of work on automatic parameter choice for machine learning and optimization algorithms.
+For example, automatic choice of regularization parameters for ridge regression algorithms was considered in \cite{CI12}.
+In \cite{GEE10}, the authors present an automatic method for choosing a pair of parameters for image processing tasks--namely de-blurring and zooming. Their technique involves iteratively alternating between optimizing one of the two parameters.
+These aforementioned results depend on assuming some 
 underlying structure in the data, and exploiting that in order to provide 
 analytic techniques that compute the optimal or near-optimal choice of 
-parameter. Many of these automatic tuning algorithms are also extremely 
-application-specific. 
+parameter. They are also quite application specific.
 
-To our knowledge, there is no general framework for automating parameter 
-choice that can be applied independent of algorithm or task. In this work 
-we propose a system to optimize parameters that depends only on the input 
-and output of the algorithm. Our system does not assume any underlying 
-data model, and only uses its own history to estimate optimal parameters. 
-This approach may give worse results than the model approach if the model 
-is carefully chosen, but this is not always possible, and it does not
-allow for changes to the data over time.
+There have also been attempts to automatically choose parameters for various optimization tasks using genetic algorithms. In \cite{CH05}, the authors attempt to use genetic algorithms to choose parameters in agent-based simulations--an algorithm class where very large numbers of tunable parameters are the norm. A genetic algorithms approach to choosing parameters for convex programming was introduced in \cite{AST09}. One disadvantage of genetic algorithms for parameter optimization is that they require many iterations, each of which requires many test runs of the algorithm to be optimized with different parameters in order to compute relative fitness. As a result, if the underlying datasets of interest are large and change over time--as they do in our application--it is impractical to frequently re-run the genetic algorithm. 
+
+A generic approach for optimization of machine learning parameters based on statistical methods is presented in \cite{SLA12}. Here the authors model a machine learning algorithm via a Gaussian process, and use this model to predict good parameter choices for the algorithm. A general method for tuning Mixed Integer-Linear Programming algorithms based on previous runs appears in \cite{BBGH07}. In this work, the authors run experiments with many different parameter settings, and then fix the parameters to be the empirically best results from these tests.
+
+None of the above approaches are suitable for a context in which the input data changes over time and the user can specify budgets for resources such as computation time. They instead focus on optimizing parameters as a preprocessing step, and then fixing a choice of parameters to use thereafter. This differs from our approach in that we allow the user to dictate their computational constraints, and we use complete information about previous jobs in order to choose the best possible parameters. This is especially useful in tasks which are done routinely over a span of time. Also, none of the above works are relevant for choices regarding parallelism in distributed machine learning.
+
+The most similar framework to our own is the distributed machine learning library MLBase \cite{KTDGFJ13}. This library, given a machine learning problem, attempts to find the best possible algorithm for the task, running them concurrently and returning periodic results to the user. MLBase does not currently support the DFC framework, and part of the motivation for our work is to add the DFC algorithm, as well as the optimizer/budget framework to MLBase.
