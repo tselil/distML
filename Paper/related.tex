@@ -1,0 +1,16 @@
+There has been a large amount of work on automatic parameter choice, 
+especially for regularization parameters in various regression algorithms 
+\cite{CI12},\cite{GEE10},\cite{BBGH07}. However, many of these results depend on assuming some 
+underlying structure in the data, and exploiting that in order to provide 
+analytic techniques that compute the optimal or near-optimal choice of 
+parameter. Many of these automatic tuning algorithms are also extremely 
+application-specific. 
+
+To our knowledge, there is no general framework for automating parameter 
+choice that can be applied independent of algorithm or task. In this work 
+we propose a system to optimize parameters that depends only on the input 
+and output of the algorithm. Our system does not assume any underlying 
+data model, and only uses its own history to estimate optimal parameters. 
+This approach may give worse results than the model approach if the model 
+is carefully chosen, but this is not always possible, and it does not
+allow for changes to the data over time.
