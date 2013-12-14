@@ -29,7 +29,23 @@ We generated five $4000 \times 4000$ matrices with
 \[(r,p,\sigma^2) = (10,.1,.01),\] 
 and split the data into training/testing splits as mentioned in the previous section. Figure 1 displays the results of one of the training/testing splits of the data. Each curve of the graph represents a choice of the division parameter in DFC. The first graph is the training data and we can empirically see that there are specific intersection points where the parameter choice should change. The second graph shows the error of DFC computations with manually chosen and optimized parameters. Each curve represents a specific choice of the division parameter, and the bold curve represents the choices made by the optimizer. We can see that the optimizer consistently chooses whichever division optimizes the error within the specified time budget. 
 
-Table 1 summarizes the results of each of the training/testing splits. Averaged over all these splits, the optimized parameter choices perform within [SOME NUMBER] of minimal error, and coming within [SOME NUMBER] of the budget.
+Table \ref{fig:4kCrossTable} summarizes the results of each of the training/testing splits. Averaged over all these splits, the optimized parameter choices perform within [SOME NUMBER] of minimal error, and coming within [SOME NUMBER] of the budget.
+
+\begin{table}
+\label{fig:4kCrossTable}
+\begin{center}
+    \begin{tabular}{| p{2.2cm} | p{2.2cm} | p{2.2cm} |}
+    \hline
+    Testing Set & \% Over Optimal Error & \% Over Time Budget \\ \hline
+    1 & 0.03\% & -11.7\% \\ \hline
+    2 & 0.50\% & -13.1\% \\ \hline
+    3 & 0.42\% & -13.8\% \\ \hline
+    4 & 0.94\% & -16.1\% \\ \hline
+    5 & 0.53\% & -12.4\% \\ \hline
+    \end{tabular}
+\end{center}
+\caption{Average regret and time for k-fold cross-validation of optimizer run on five Gaussian random matrices of dimension 4000 by 4000. Percentages are in relationship to best possible error and time budget respectively.}
+\end{table}
 
 \begin{figure*}
 	\begin{subfigure}[b]{.45\textwidth}
@@ -58,7 +74,25 @@ There are some qualitative differences between this data and the synthetic data 
 
 The dataset was partitioned by the UserID into seven different pieces and the pieces were grouped to form the training/testing splits mentioned in the first section. Figure 2 displays the results of one of these splits. As before, each curve represents one of the choices of the division parameter in DFC. Once again we observe the intersection points where the division parameter should be changed for optimality to be satisfied. The bold line represents the optimized parameters for each budget. The graphs here are qualitatively the same as the graphs from the previous section. For every time budget, the optimizer picks the best division parameter. 
 
-Table 2 summarizes the results of each of the training/testing splits for the Movielens dataset. Averaged over all these splits, the optimized parameter choices perform within [SOME NUMBER] of minimal error, and coming within [SOME NUMBER] of the budget.
+Table \ref{fig:MovieCrossTable} summarizes the results of each of the training/testing splits for the Movielens dataset. Averaged over all these splits, the optimized parameter choices perform within [SOME NUMBER] of minimal error, and coming within [SOME NUMBER] of the budget.
+
+\begin{table}
+\label{fig:MovieCrossTable}
+\begin{center}
+    \begin{tabular}{| p{2.2cm} | p{2.2cm} | p{2.2cm} |}
+    \hline
+    Testing Set & \% Over Optimal Error & \% Over Time Budget \\ \hline
+    1 & 2.0\% & -11.9\% \\ \hline
+    2 & 0.1\% & -10.9\% \\ \hline
+    3 & -1.8\% & -10.2\% \\ \hline
+    4 & -1.0\% & -9.3\% \\ \hline
+    5 & 1.1\% & -10.5\% \\ \hline
+    6 & 0.9\% & -14.9\% \\ \hline
+    7 & -2.9\% & 2.3\% \\ \hline
+    \end{tabular}
+\end{center}
+\caption{Average regret and time for k-fold cross-validation of optimizer run on the seven Movielens matrices. Percentages are in relationship to best possible error and time budget respectively.}
+\end{table}
 
 \begin{figure*}
 	\begin{subfigure}[b]{.45\textwidth}
@@ -79,9 +113,47 @@ Table 2 summarizes the results of each of the training/testing splits for the Mo
 \end{figure*}
 
 \subsection{Training on less Data}
-In an effort to discover how much training data we need for accurate optimizer predictions, we also ran some tests on training/testing splits with smaller training sets. Instead of training on all six data partitions, we tried training the optimizer on only two partitions and testing it on the remaining five. The optimizer performs basically as well as if we had trained on almost all the partitions. Table 3 summarizes these results. We believe this is because the data is qualitatively the same across all the partitions, so the additional partitions do not add a lot of information to the optimizer. Distributions with higher variance in behavior may require significantly more learning, though we have not yet tested this. 
+In an effort to discover how much training data we need for accurate optimizer predictions, we also ran some tests on training/testing splits with smaller training sets. Instead of training on all six data partitions, we tried training the optimizer on only two partitions and testing it on the remaining five. The optimizer performs basically as well as if we had trained on almost all the partitions. Table \ref{fig:MovieTrain2Table} summarizes these results. We believe this is because the data is qualitatively the same across all the partitions, so the additional partitions do not add a lot of information to the optimizer. Distributions with higher variance in behavior may require significantly more learning, though we have not yet tested this. 
+
+\begin{table}
+\label{fig:MovieTrain2Table}
+\begin{center}
+    \begin{tabular}{| p{2.2cm} | p{2.2cm} | p{2.2cm} |}
+    \hline
+    Testing Set & \% Over Optimal Error & \% Over Time Budget \\ \hline
+    1 & -1.8\% & -10.5\% \\ \hline
+    2 & -1.1\% & -11.7\% \\ \hline
+    3 & 1.1\% & -12.0\% \\ \hline
+    4 & 0.02\% & -13.9\% \\ \hline
+    5 & -2.9\% & 2.29\% \\ \hline
+    \end{tabular}
+\end{center}
+\caption{Average regret and time for k-fold cross-validation of optimizer run on the seven Movielens matrices. Percentages are in relationship to best possible error and time budget respectively.}
+\end{table}
 
 \subsection{Testing Explore Mode}
+\label{sec:estEval}
 The previous sections show that our optimizer performs quite well when its training set accurately reflects the behavior of the algorithm on future jobs. However, sometimes an application can receive an instance that is unlike the previously seen jobs. In this case, we want to use some randomness while picking our parameters so that we can explore the parameter space. We would like to explore without sacrificing too much in the error or time of the computation, so we pick parameters proportionally to the error we expect to get with those settings. 
 
 We tested this functionality by beginning with estimations for small Gaussian inputs and feeding the optimizer larger matrices. We gave the optimizer training data from $2000 \times 2000$ Gaussian random matrices and applied our estimation method to guess runtime profiles for $4000 \times 4000$ Gaussian random matrices. Finally, we gave the optimizer a sequence of ten $4000 \times 4000$ Gaussian random matrices and asked the computation to finish within two-hundred seconds. While exploring, the optimizer was able to find a parameter setting with an error that was within $15\%$ of the best parameter choice that satisfies that budget that we could find in hindsight. It did not find better settings because we over-estimated the amount of time per iteration, and so the optimizer did not try running with more iterations because it thought that would violate the budget.
+
+\begin{table*}
+\label{fig:4kAdaptiveTable}
+\begin{center}
+    \begin{tabular}{| p{2.2cm} | p{2.2cm} | p{2.2cm} | p{2.2cm} | p{2.2cm} |}
+    \hline
+    Test Matrix & RMSE & Running Time (sec) & Slices & Iterations \\ \hline
+    1 & 0.26 & 41.7 & 4 & 10 \\ \hline
+    2 & 0.27 & 37.0 & 5 & 10 \\ \hline
+    3 & 0.08 & 67.7 & 6 & 20 \\ \hline
+    4 & 0.08 & 74.8 & 5 & 20 \\ \hline
+    5 & 0.26 & 70.0 & 2 & 10 \\ \hline
+    6 & 0.09 & 239 & 1 & 20 \\ \hline
+    7 & 0.26 & 124 & 1 & 10 \\ \hline
+    8 & 0.26 & 50.8 & 3 & 10 \\ \hline
+    9 & 0.27 & 33.7 & 7 & 10 \\ \hline
+    10 & 0.09 & 140 & 2 & 20 \\ \hline
+    \end{tabular}
+\end{center}
+\caption{Parameter choices and results for running the optimizer in explore mode on ten Gaussian random 4000 by 4000 matrices}
+\end{table*}
