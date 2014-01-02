@@ -9,15 +9,19 @@ require(svd)
 args <- commandArgs(trailing = TRUE)
 
 if (length(args) < 1) {
-	print("Usage: DFC.R <master>[<slices>] <slices> <masked_file> <iterations> <randProject=T/F>")
+	print("Usage: DFC.R <master>[<slices>] <slices> <masked_file> <iterations> <randProject=T/F> <baseAlgorithm = APG or SGD>")
 	q("no")
 }
 
 # Takes a pair (matrix, iterations) and applies the base factorization algorithm for the specified iterations
-factorCols <- function(itersAndMat) {
+factorColsAPG <- function(itersAndMat) {
 	iters <- itersAndMat[[1]][[1]]
 	mat <- itersAndMat[[1]][[2]]
 	UV <- apgBase(mat,iters)
+	list(UV)
+}
+factorColsSGD <- function(mat) {
+	UV <- sgdBase(mat[[1]])
 	list(UV)
 }
 
@@ -232,7 +236,12 @@ apgBase <- function(mat,maxiter) {
 
 # Base stochastic gradient descent algorithm for matrix completion
 sgdBase <- function(mat) {
-
+	tbase <- proc.time() # Timing code
+	
+	# Import packages
+	require('Matrix')
+	require(Rcpp)
+	
 	# Set Parameters
 	m <- dim(mat)[1]
 	n <- dim(mat)[2]
@@ -294,8 +303,9 @@ sgdBase <- function(mat) {
 			t <- t + 1
 		}
 	}
+	sgdtime <- as.numeric((proc.time() - tbase)["elapsed"]) #Timing Code
 	cat("RMSE for submatrix: ",rmse,"\n")
-	list(row_feats,col_feats)
+	list(row_feats,col_feats,sgdtime)
 }
 
 # Calculate the root mean squared error of the matrix 
@@ -313,13 +323,23 @@ errorCal <- function(mat, U, V){
 }
 
 # Divide factor combine
-dfc <- function(mat, sc, slices, iters, randProject=TRUE) {
+dfc <- function(mat, sc, slices, iters=0, baseAlgorithm="APG",randProject=TRUE) {
 	sourceCpp('maskUV.cpp')
 
 	# Cut the matrix by columns into several submatrices, one for each slice of computation
 	cols <- dim(mat)[2]	
-	listMat <- lapply(1:slices, function(i) list(iters,mat[,(1 + floor((i-1)*cols/slices)):floor(i*cols/slices),drop=FALSE]))
-	
+	if(baseAlgorithm == "APG") {
+		listMat <- lapply(1:slices, function(i) list(iters,mat[,(1 + floor((i-1)*cols/slices)):floor(i*cols/slices),drop=FALSE]))
+	}
+	else if(baseAlgorithm == "SGD") {
+		listMat <- lapply(1:slices, function(i) mat[,(1 + floor((i-1)*cols/slices)):floor(i*cols/slices),drop=FALSE])
+	}
+	else {
+		print("Invalid Base Algorithm Specified")
+		q("no")
+	}
+	submatRDD <- parallelize(sc,listMat,slices)
+		
 	tover <- proc.time() # Timing Code
 	
 	# Create the RDD
@@ -328,7 +348,12 @@ dfc <- function(mat, sc, slices, iters, randProject=TRUE) {
 	overhead <- as.numeric((proc.time() - tover)["elapsed"]) # Timing Code
 	
 	# factor each slice
-	factorsRDD <- lapplyPartition(subMatRDD,factorCols)
+	if(baseAlgorithm == "APG") {
+		factorsRDD <- lapplyPartition(subMatRDD,factorColsAPG)
+	} 
+	else if(baseAlgorithm == "SGD") {
+		factorsRDD <- lapplyPartition(submatRDD,factorColsSGD)
+	}
 	
 	# collect the results
 	factorList <- collect(factorsRDD)
@@ -381,10 +406,14 @@ if(length(args) > 4) {
 	}
 }
 
+# Base Algorithm
+if(length(args) > 5) {
+	baseAlg <- args[[6]]
+}
 ttot <- proc.time() # Timing Code
 
 # Run DFC
-outs <- dfc(maskedM, sc, slices, iterations, randProject=randProj)
+outs <- dfc(maskedM, sc, slices, iters=iterations, randProject=randProj,baseAlgorithm=baseAlg)
 
 totalTime <- as.numeric((proc.time() - ttot)["elapsed"]) # Timing Code
 
